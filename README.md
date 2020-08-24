@@ -3,9 +3,9 @@
 
 [![GitHub](https://img.shields.io/github/license/odpi/egeria-connector-hadoop-ecosystem)](LICENSE) [![Azure](https://dev.azure.com/odpi/egeria/_apis/build/status/odpi.egeria-connector-hadoop-ecosystem)](https://dev.azure.com/odpi/Egeria/_build) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=egeria-connector-hadoop-ecosystem&metric=alert_status)](https://sonarcloud.io/dashboard?id=egeria-connector-hadoop-ecosystem) [![Maven Central](https://img.shields.io/maven-central/v/org.odpi.egeria/egeria-connector-hadoop-ecosystem)](https://mvnrepository.com/artifact/org.odpi.egeria/egeria-connector-hadoop-ecosystem)
 
-(https://github.com/odpi/egeria/blob/master/assets/img/ODPi_Egeria_Logo_color.png)
+![Egeria Logo](assets/img/ODPi_Egeria_Logo_color.png)
 
-#Egeria - Open Metadata and Governance
+# Egeria - Open Metadata and Governance
 
 Egeria provides the Apache 2.0 licensed open metadata and governance type system, frameworks, APIs, event payloads and interchange protocols to enable tools, engines and platforms to exchange metadata in order to get the best value from data whilst ensuring it is properly governed.
 
