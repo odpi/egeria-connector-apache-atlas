@@ -2405,14 +2405,14 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
                                         atlasCriterion.setOperator(SearchParameters.Operator.STARTS_WITH);
                                     } else if (repositoryHelper.isExactMatchRegex(candidateValue)) {
                                         if (negateCondition) {
-                                            if (unqualifiedValue.equals("")) {
+                                            if (unqualifiedValue.length() == 0) {
                                                 atlasCriterion.setOperator(SearchParameters.Operator.NOT_NULL);
                                             } else {
                                                 atlasCriterion.setOperator(SearchParameters.Operator.NEQ);
                                             }
                                             sbCriterion.append(" != \"");
                                         } else {
-                                            if (unqualifiedValue.equals("")) {
+                                            if (unqualifiedValue.length() == 0) {
                                                 atlasCriterion.setOperator(SearchParameters.Operator.IS_NULL);
                                             } else {
                                                 atlasCriterion.setOperator(SearchParameters.Operator.EQ);
