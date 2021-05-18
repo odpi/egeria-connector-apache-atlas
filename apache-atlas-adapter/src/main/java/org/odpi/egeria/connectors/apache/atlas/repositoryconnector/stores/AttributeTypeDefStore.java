@@ -158,10 +158,10 @@ public class AttributeTypeDefStore {
      *
      * @param atlasName the name of the Apache Atlas TypeDef
      * @return {@code Map<String, Set<String>>}
-
+     */
     public Map<String, Set<String>> getElementMappingsForAtlasTypeDef(String atlasName) {
         return atlasNameToElementMap.getOrDefault(atlasName, null);
-    }*/
+    }
 
     /**
      * Retrieves a map from OMRS enum value to Apache Atlas enum value for the provided OMRS TypeDef name, or null
@@ -195,10 +195,10 @@ public class AttributeTypeDefStore {
      *
      * @param atlasName the name of the Apache Atlas TypeDef
      * @return String
-
+     */
     public String getMappedOMRSTypeDefName(String atlasName) {
         return atlasNameToOmrsName.getOrDefault(atlasName, null);
-    }*/
+    }
 
     /**
      * Adds the provided TypeDef to the list of those that are implemented in the repository.

@@ -67,7 +67,7 @@ public class ApacheAtlasOMRSRepositoryConnector extends OMRSRepositoryConnector 
      * {@inheritDoc}
      */
     @Override
-    public void start() throws ConnectorCheckedException {
+    public synchronized void start() throws ConnectorCheckedException {
 
         super.start();
         final String methodName = "start";
@@ -87,7 +87,7 @@ public class ApacheAtlasOMRSRepositoryConnector extends OMRSRepositoryConnector 
      * {@inheritDoc}
      */
     @Override
-    public void disconnect() {
+    public synchronized void disconnect() {
         final String methodName = "disconnect";
         auditLog.logMessage(methodName, ApacheAtlasOMRSAuditCode.REPOSITORY_SERVICE_SHUTDOWN.getMessageDefinition(getServerName()));
     }
