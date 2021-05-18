@@ -1,7 +1,11 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 <!-- Copyright Contributors to the ODPi Egeria project. -->
 
-[![GitHub](https://img.shields.io/github/license/odpi/egeria-connector-hadoop-ecosystem)](LICENSE) [![Azure](https://dev.azure.com/odpi/egeria/_apis/build/status/odpi.egeria-connector-hadoop-ecosystem)](https://dev.azure.com/odpi/Egeria/_build) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=egeria-connector-hadoop-ecosystem&metric=alert_status)](https://sonarcloud.io/dashboard?id=egeria-connector-hadoop-ecosystem) [![Maven Central](https://img.shields.io/maven-central/v/org.odpi.egeria/egeria-connector-hadoop-ecosystem)](https://mvnrepository.com/artifact/org.odpi.egeria/egeria-connector-hadoop-ecosystem)
+[![License](https://img.shields.io/github/license/odpi/egeria-connector-hadoop-ecosystem)](LICENSE)
+[![Build](https://github.com/odpi/egeria-connector-hadoop-ecosystem/workflows/Build/badge.svg)](https://github.com/odpi/egeria-connector-hadoop-ecosystem/actions/workflows/merge.yml?query=workflow%3ABuild)
+[![CodeQL](https://github.com/odpi/egeria-connector-hadoop-ecosystem/workflows/CodeQL/badge.svg)](https://github.com/odpi/egeria-connector-hadoop-ecosystem/actions/workflows/codeql-analysis.yml)
+[![Release](https://img.shields.io/maven-central/v/org.odpi.egeria/egeria-connector-hadoop-ecosystem-package?label=release)](http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=org.odpi.egeria&a=egeria-connector-hadoop-ecosystem-package&v=RELEASE&c=jar-with-dependencies)
+[![Development](https://img.shields.io/nexus/s/org.odpi.egeria/egeria-connector-hadoop-ecosystem-package?label=development&server=https%3A%2F%2Foss.sonatype.org)](https://oss.sonatype.org/content/repositories/snapshots/org/odpi/egeria/egeria-connector-hadoop-ecosystem-package/)
 
 # Hadoop Ecosystem Repository Connectors
 
