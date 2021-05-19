@@ -382,42 +382,46 @@ public class RelationshipMapping {
             String atlasTypeName = atlasObj.getTypeName();
             String omrsTypeDefName = typeDefStore.getMappedOMRSTypeDefName(atlasTypeName, entityPrefix);
 
-            String qualifiedName;
-            Map<String, Object> attributes = atlasObj.getAttributes();
-            if (attributes.containsKey("qualifiedName")) {
-                qualifiedName = (String) attributes.get("qualifiedName");
-            } else {
-                log.error("No qualifiedName found for object -- cannot create EntityProxy: {}", atlasObj);
-                throw new NullPointerException("No qualifiedName found for object -- cannot create EntityProxy.");
-            }
+            if (omrsTypeDefName != null) {
+                String qualifiedName;
+                Map<String, Object> attributes = atlasObj.getAttributes();
+                if (attributes.containsKey("qualifiedName")) {
+                    qualifiedName = (String) attributes.get("qualifiedName");
+                } else {
+                    log.error("No qualifiedName found for object -- cannot create EntityProxy: {}", atlasObj);
+                    throw new NullPointerException("No qualifiedName found for object -- cannot create EntityProxy.");
+                }
 
-            InstanceProperties uniqueProperties = repositoryHelper.addStringPropertyToInstance(
-                    repositoryName,
-                    null,
-                    "qualifiedName",
-                    qualifiedName,
-                    methodName
-            );
-
-            try {
-                entityProxy = repositoryHelper.getNewEntityProxy(
+                InstanceProperties uniqueProperties = repositoryHelper.addStringPropertyToInstance(
                         repositoryName,
-                        metadataCollectionId,
-                        InstanceProvenanceType.LOCAL_COHORT,
-                        userId,
-                        omrsTypeDefName,
-                        uniqueProperties,
-                        null
+                        null,
+                        "qualifiedName",
+                        qualifiedName,
+                        methodName
                 );
-                AtlasGuid atlasGuid = new AtlasGuid(atlasObj.getGuid(), entityPrefix);
-                entityProxy.setGUID(atlasGuid.toString());
-                entityProxy.setCreatedBy(atlasObj.getCreatedBy());
-                entityProxy.setCreateTime(atlasObj.getCreateTime());
-                entityProxy.setUpdatedBy(atlasObj.getUpdatedBy());
-                entityProxy.setUpdateTime(atlasObj.getUpdateTime());
-                entityProxy.setVersion(atlasObj.getVersion());
-            } catch (TypeErrorException e) {
-                log.error("Unable to create new EntityProxy.", e);
+
+                try {
+                    entityProxy = repositoryHelper.getNewEntityProxy(
+                            repositoryName,
+                            metadataCollectionId,
+                            InstanceProvenanceType.LOCAL_COHORT,
+                            userId,
+                            omrsTypeDefName,
+                            uniqueProperties,
+                            null
+                    );
+                    AtlasGuid atlasGuid = new AtlasGuid(atlasObj.getGuid(), entityPrefix);
+                    entityProxy.setGUID(atlasGuid.toString());
+                    entityProxy.setCreatedBy(atlasObj.getCreatedBy());
+                    entityProxy.setCreateTime(atlasObj.getCreateTime());
+                    entityProxy.setUpdatedBy(atlasObj.getUpdatedBy());
+                    entityProxy.setUpdateTime(atlasObj.getUpdateTime());
+                    entityProxy.setVersion(atlasObj.getVersion());
+                } catch (TypeErrorException e) {
+                    log.error("Unable to create new EntityProxy.", e);
+                }
+            } else {
+                log.error("No mapped OMRS TypeDef found for EntityProxy: {}{}", entityPrefix == null ? "" : entityPrefix + "#", atlasTypeName);
             }
 
         } else {
