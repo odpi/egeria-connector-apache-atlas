@@ -594,7 +594,7 @@ public class TypeDefStore {
                         String atlas2,
                         String omrs2,
                         String prefix2,
-                        boolean invertMapping) {
+                        boolean invertedMapping) {
             this.atlasRelationshipTypeName = atlasRelationshipTypeName;
             this.omrsRelationshipTypeName = omrsRelationshipTypeName;
             this.atlas1 = atlas1;
