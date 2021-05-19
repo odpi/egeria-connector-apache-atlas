@@ -64,7 +64,7 @@ public class MappingFromFile {
     @JsonProperty("endpointMappings") public void setEndpointMappings(List<MappingFromFile> endpointMappings) { this.endpointMappings = endpointMappings; }
 
     @JsonProperty("invertedEndpoints") public boolean getInvertedEndpoints() { return invertedEndpoints; }
-    @JsonProperty("invertedEndpoints") public void setInvertedEndpoints(boolean invertEndpoints) { this.invertedEndpoints = invertedEndpoints; }
+    @JsonProperty("invertedEndpoints") public void setInvertedEndpoints(boolean invertedEndpoints) { this.invertedEndpoints = invertedEndpoints; }
 
     @JsonIgnore public boolean isGeneratedType() { return this.prefix != null; }
 
