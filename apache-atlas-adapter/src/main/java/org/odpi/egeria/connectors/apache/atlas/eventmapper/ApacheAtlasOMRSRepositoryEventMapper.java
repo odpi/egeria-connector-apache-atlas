@@ -24,6 +24,7 @@ import org.odpi.openmetadata.repositoryservices.connectors.openmetadatatopic.Ope
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.instances.*;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.AttributeTypeDef;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.TypeDef;
+import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.TypeDefCategory;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.TypeDefPatch;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.repositoryeventmapper.OMRSRepositoryEventMapperBase;
 import org.odpi.openmetadata.repositoryservices.ffdc.exception.RepositoryErrorException;
@@ -213,31 +214,41 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
         // Send an event for every entity: normal and generated
         String atlasTypeName = atlasEntityHeader.getTypeName();
         Map<String, String> omrsTypesByPrefix = typeDefStore.getAllMappedOMRSTypeDefNames(atlasTypeName);
-        for (String prefix : omrsTypesByPrefix.keySet()) {
-            EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
-            if (entityDetail != null) {
-                repositoryEventProcessor.processNewEntityEvent(
-                        sourceName,
-                        metadataCollectionId,
-                        originatorServerName,
-                        originatorServerType,
-                        localOrganizationName,
-                        entityDetail
-                );
-                if (prefix != null) {
-                    List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, entityDetail);
-                    for (Relationship generatedRelationship : generatedRelationships) {
-                        repositoryEventProcessor.processNewRelationshipEvent(
+        if (omrsTypesByPrefix != null) {
+            // Note: these mappings will be for both entities and self-referencing relationships.
+            for (Map.Entry<String, String> entry : omrsTypesByPrefix.entrySet()) {
+                String prefix = entry.getKey();
+                String omrsTypeName = entry.getValue();
+                // We need to ensure this OMRS type is actually for an entity before attempting to map it as one
+                TypeDef typeDef = typeDefStore.getTypeDefByName(omrsTypeName);
+                if (typeDef.getCategory() == TypeDefCategory.ENTITY_DEF) {
+                    EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
+                    if (entityDetail != null) {
+                        repositoryEventProcessor.processNewEntityEvent(
                                 sourceName,
                                 metadataCollectionId,
                                 originatorServerName,
                                 originatorServerType,
                                 localOrganizationName,
-                                generatedRelationship
+                                entityDetail
                         );
+                        // If the entity was mapped, also send events for any self-referencing (generated) relationships
+                        List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, entityDetail);
+                        for (Relationship generatedRelationship : generatedRelationships) {
+                            repositoryEventProcessor.processNewRelationshipEvent(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    originatorServerName,
+                                    originatorServerType,
+                                    localOrganizationName,
+                                    generatedRelationship
+                            );
+                        }
                     }
                 }
             }
+        } else {
+            log.warn("Unmapped Atlas type, cannot process event: {}", atlasTypeName);
         }
     }
 
@@ -253,26 +264,34 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
             EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
             if (entityDetail != null) {
                 // TODO: find a way to pull back the old version to send in the update event
+                //  (for now we will just fake one based on the latest version of the entity)
+                EntityDetail oldE = new EntityDetail(entityDetail);
+                oldE.setProperties(null);
+                oldE.setVersion(-1L);
                 repositoryEventProcessor.processUpdatedEntityEvent(
                         sourceName,
                         metadataCollectionId,
                         originatorServerName,
                         originatorServerType,
                         localOrganizationName,
-                        null,
+                        oldE,
                         entityDetail
                 );
                 if (prefix != null) {
                     List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, entityDetail);
                     for (Relationship generatedRelationship : generatedRelationships) {
                         // TODO: find a way to pull back the old version to send in the update event
+                        //  (for now we will just fake one based on the latest version of the relationship)
+                        Relationship oldR = new Relationship(generatedRelationship);
+                        oldR.setProperties(null);
+                        oldR.setVersion(-1L);
                         repositoryEventProcessor.processUpdatedRelationshipEvent(
                                 sourceName,
                                 metadataCollectionId,
                                 originatorServerName,
                                 originatorServerType,
                                 localOrganizationName,
-                                null,
+                                oldR,
                                 generatedRelationship
                         );
                     }
@@ -294,24 +313,26 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
         String atlasTypeName = atlasEntityHeader.getTypeName();
         List<Relationship> generatedRelationships = new ArrayList<>();
         Map<String, TypeDefStore.EndpointMapping> mappings = typeDefStore.getAllEndpointMappingsFromAtlasName(atlasTypeName);
-        for (Map.Entry<String, TypeDefStore.EndpointMapping> entry : mappings.entrySet()) {
-            String relationshipPrefix = entry.getKey();
-            if (relationshipPrefix != null) {
-                AtlasGuid atlasGuid = new AtlasGuid(atlasEntityHeader.getGuid(), relationshipPrefix);
-                try {
-                    Relationship generatedRelationship = RelationshipMapping.getSelfReferencingRelationship(
-                            atlasRepositoryConnector,
-                            typeDefStore,
-                            atlasGuid,
-                            new AtlasEntity(atlasEntityHeader)
-                    );
-                    if (generatedRelationship != null) {
-                        generatedRelationships.add(generatedRelationship);
-                    } else {
-                        log.warn("Unable to create generated relationship with prefix {}, for entity: {}", relationshipPrefix, entityDetail.getGUID());
+        if (mappings != null) {
+            for (Map.Entry<String, TypeDefStore.EndpointMapping> entry : mappings.entrySet()) {
+                String relationshipPrefix = entry.getKey();
+                if (relationshipPrefix != null) {
+                    AtlasGuid atlasGuid = new AtlasGuid(atlasEntityHeader.getGuid(), relationshipPrefix);
+                    try {
+                        Relationship generatedRelationship = RelationshipMapping.getSelfReferencingRelationship(
+                                atlasRepositoryConnector,
+                                typeDefStore,
+                                atlasGuid,
+                                new AtlasEntity(atlasEntityHeader)
+                        );
+                        if (generatedRelationship != null) {
+                            generatedRelationships.add(generatedRelationship);
+                        } else {
+                            log.warn("Unable to create generated relationship with prefix {}, for entity: {}", relationshipPrefix, entityDetail.getGUID());
+                        }
+                    } catch (RepositoryErrorException e) {
+                        log.error("Unable to create generated relationship with prefix {}, for entity: {}", relationshipPrefix, entityDetail.getGUID(), e);
                     }
-                } catch(RepositoryErrorException e){
-                    log.error("Unable to create generated relationship with prefix {}, for entity: {}", relationshipPrefix, entityDetail.getGUID(), e);
                 }
             }
         }
@@ -384,18 +405,20 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
         } catch (AtlasServiceException e) {
             log.error("Unable to retrieve relationship from Atlas: {}", atlasRelationshipHeader, e);
         }
-        RelationshipMapping mapping = new RelationshipMapping(
-                atlasRepositoryConnector,
-                atlasMetadataCollection.getTypeDefStore(),
-                atlasMetadataCollection.getAttributeTypeDefStore(),
-                new AtlasGuid(atlasRelationshipHeader.getGuid(), null),
-                atlasRelationship,
-                null
-        );
-        try {
-            result = mapping.getRelationship();
-        } catch (RepositoryErrorException e) {
-            log.error("Unable to map relationship to OMRS Relationship: {}", atlasRelationship, e);
+        if (atlasRelationship != null) {
+            RelationshipMapping mapping = new RelationshipMapping(
+                    atlasRepositoryConnector,
+                    atlasMetadataCollection.getTypeDefStore(),
+                    atlasMetadataCollection.getAttributeTypeDefStore(),
+                    new AtlasGuid(atlasRelationshipHeader.getGuid(), null),
+                    atlasRelationship,
+                    null
+            );
+            try {
+                result = mapping.getRelationship();
+            } catch (RepositoryErrorException e) {
+                log.error("Unable to map relationship to OMRS Relationship: {}", atlasRelationship, e);
+            }
         }
         return result;
     }
