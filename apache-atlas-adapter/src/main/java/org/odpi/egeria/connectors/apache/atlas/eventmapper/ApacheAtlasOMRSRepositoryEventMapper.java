@@ -260,43 +260,47 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
     private void processUpdatedEntity(AtlasEntityHeader atlasEntityHeader) {
         // Send an event for every entity: normal and generated
         Map<String, String> omrsTypesByPrefix = typeDefStore.getAllMappedOMRSTypeDefNames(atlasEntityHeader.getTypeName());
-        for (String prefix : omrsTypesByPrefix.keySet()) {
-            EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
-            if (entityDetail != null) {
-                // TODO: find a way to pull back the old version to send in the update event
-                //  (for now we will just fake one based on the latest version of the entity)
-                EntityDetail oldE = new EntityDetail(entityDetail);
-                oldE.setProperties(null);
-                oldE.setVersion(-1L);
-                repositoryEventProcessor.processUpdatedEntityEvent(
-                        sourceName,
-                        metadataCollectionId,
-                        originatorServerName,
-                        originatorServerType,
-                        localOrganizationName,
-                        oldE,
-                        entityDetail
-                );
-                if (prefix != null) {
-                    List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, entityDetail);
-                    for (Relationship generatedRelationship : generatedRelationships) {
-                        // TODO: find a way to pull back the old version to send in the update event
-                        //  (for now we will just fake one based on the latest version of the relationship)
-                        Relationship oldR = new Relationship(generatedRelationship);
-                        oldR.setProperties(null);
-                        oldR.setVersion(-1L);
-                        repositoryEventProcessor.processUpdatedRelationshipEvent(
-                                sourceName,
-                                metadataCollectionId,
-                                originatorServerName,
-                                originatorServerType,
-                                localOrganizationName,
-                                oldR,
-                                generatedRelationship
-                        );
+        if (omrsTypesByPrefix != null) {
+            for (String prefix : omrsTypesByPrefix.keySet()) {
+                EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
+                if (entityDetail != null) {
+                    // TODO: find a way to pull back the old version to send in the update event
+                    //  (for now we will just fake one based on the latest version of the entity)
+                    EntityDetail oldE = new EntityDetail(entityDetail);
+                    oldE.setProperties(null);
+                    oldE.setVersion(-1L);
+                    repositoryEventProcessor.processUpdatedEntityEvent(
+                            sourceName,
+                            metadataCollectionId,
+                            originatorServerName,
+                            originatorServerType,
+                            localOrganizationName,
+                            oldE,
+                            entityDetail
+                    );
+                    if (prefix != null) {
+                        List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, entityDetail);
+                        for (Relationship generatedRelationship : generatedRelationships) {
+                            // TODO: find a way to pull back the old version to send in the update event
+                            //  (for now we will just fake one based on the latest version of the relationship)
+                            Relationship oldR = new Relationship(generatedRelationship);
+                            oldR.setProperties(null);
+                            oldR.setVersion(-1L);
+                            repositoryEventProcessor.processUpdatedRelationshipEvent(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    originatorServerName,
+                                    originatorServerType,
+                                    localOrganizationName,
+                                    oldR,
+                                    generatedRelationship
+                            );
+                        }
                     }
                 }
             }
+        } else {
+            log.warn("Unable to process an entity update for unmapped type: {}", atlasEntityHeader.getTypeName());
         }
     }
 
