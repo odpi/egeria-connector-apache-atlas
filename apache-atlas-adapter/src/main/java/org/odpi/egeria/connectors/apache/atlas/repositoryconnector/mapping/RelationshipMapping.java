@@ -13,6 +13,8 @@ import org.odpi.egeria.connectors.apache.atlas.repositoryconnector.stores.Attrib
 import org.odpi.egeria.connectors.apache.atlas.repositoryconnector.stores.TypeDefStore;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.instances.*;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.RelationshipDef;
+import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.RelationshipEndDef;
+import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.TypeDef;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.TypeDefAttribute;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.repositoryconnector.OMRSRepositoryHelper;
 import org.odpi.openmetadata.repositoryservices.ffdc.exception.RepositoryErrorException;
@@ -79,41 +81,63 @@ public class RelationshipMapping {
 
         Relationship omrsRelationship = null;
         if (mapping != null) {
-            // TODO: assumes the endpoints are always the same ends
+
             AtlasObjectId atlasEp1 = atlasRelationship.getEnd1();
             AtlasObjectId atlasEp2 = atlasRelationship.getEnd2();
 
-            EntityProxy ep1 = null;
-            EntityProxy ep2 = null;
+            AtlasEntity one = null;
+            AtlasEntity two = null;
 
             try {
-                ep1 = RelationshipMapping.getEntityProxyForObject(
-                        atlasRepositoryConnector,
-                        typeDefStore,
-                        atlasRepositoryConnector.getEntityByGUID(atlasEp1.getGuid(), true, true).getEntity(),
-                        mapping.getPrefixOne(),
-                        userId
-                );
+                one = atlasRepositoryConnector.getEntityByGUID(atlasEp1.getGuid(), true, true).getEntity();
+                two = atlasRepositoryConnector.getEntityByGUID(atlasEp2.getGuid(), true, true).getEntity();
             } catch (AtlasServiceException e) {
                 raiseRepositoryErrorException(ApacheAtlasOMRSErrorCode.ENTITY_NOT_KNOWN, methodName, e, atlasEp1.getGuid(), methodName, repositoryName);
             }
-            try {
-                ep2 = RelationshipMapping.getEntityProxyForObject(
-                        atlasRepositoryConnector,
-                        typeDefStore,
-                        atlasRepositoryConnector.getEntityByGUID(atlasEp2.getGuid(), true, true).getEntity(),
-                        mapping.getPrefixTwo(),
-                        userId
-                );
-            } catch (AtlasServiceException e) {
-                raiseRepositoryErrorException(ApacheAtlasOMRSErrorCode.ENTITY_NOT_KNOWN, methodName, e, atlasEp2.getGuid(), methodName, repositoryName);
-            }
 
-            if (ep1 != null && ep2 != null) {
-                omrsRelationship = getRelationship(
-                        atlasRelationshipType,
-                        ep1,
-                        ep2);
+            if (one != null && two != null) {
+
+                EntityProxy ep1;
+                EntityProxy ep2;
+                if (mapping.isInvertedMapping()) {
+                    ep1 = RelationshipMapping.getEntityProxyForObject(
+                            atlasRepositoryConnector,
+                            typeDefStore,
+                            two,
+                            mapping.getPrefixOne(),
+                            userId
+                    );
+                    ep2 = RelationshipMapping.getEntityProxyForObject(
+                            atlasRepositoryConnector,
+                            typeDefStore,
+                            one,
+                            mapping.getPrefixTwo(),
+                            userId
+                    );
+                } else {
+                    ep1 = RelationshipMapping.getEntityProxyForObject(
+                            atlasRepositoryConnector,
+                            typeDefStore,
+                            one,
+                            mapping.getPrefixOne(),
+                            userId
+                    );
+                    ep2 = RelationshipMapping.getEntityProxyForObject(
+                            atlasRepositoryConnector,
+                            typeDefStore,
+                            two,
+                            mapping.getPrefixTwo(),
+                            userId
+                    );
+                }
+
+                if (ep1 != null && ep2 != null) {
+                    omrsRelationship = getRelationship(
+                            atlasRelationshipType,
+                            ep1,
+                            ep2);
+                }
+
             }
         } else {
             log.warn("Unmapped relationship type, skipping: {}{}", relationshipPrefix == null ? "" : relationshipPrefix + "#", atlasRelationshipType);

@@ -4,7 +4,7 @@ package org.odpi.egeria.connectors.apache.atlas.repositoryconnector.stores;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.odpi.egeria.connectors.apache.atlas.repositoryconnector.mapping.MappingFromFile;
+import org.odpi.egeria.connectors.apache.atlas.repositoryconnector.model.MappingFromFile;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +139,8 @@ public class TypeDefStore {
                                     endpoint1.getPrefix(),
                                     endpoint2.getAtlasName(),
                                     endpoint2.getOMRSName(),
-                                    endpoint2.getPrefix()
+                                    endpoint2.getPrefix(),
+                                    mapping.getInvertedEndpoints()
                             );
                             if (!omrsNameToEndpointMapByPrefix.containsKey(omrsName)) {
                                 omrsNameToEndpointMapByPrefix.put(omrsName, new HashMap<>());
@@ -583,6 +584,7 @@ public class TypeDefStore {
         private String omrs2;
         private String prefix1;
         private String prefix2;
+        private boolean invertedMapping;
 
         EndpointMapping(String atlasRelationshipTypeName,
                         String omrsRelationshipTypeName,
@@ -591,7 +593,8 @@ public class TypeDefStore {
                         String prefix1,
                         String atlas2,
                         String omrs2,
-                        String prefix2) {
+                        String prefix2,
+                        boolean invertMapping) {
             this.atlasRelationshipTypeName = atlasRelationshipTypeName;
             this.omrsRelationshipTypeName = omrsRelationshipTypeName;
             this.atlas1 = atlas1;
@@ -600,12 +603,14 @@ public class TypeDefStore {
             this.omrs2 = omrs2;
             this.prefix1 = prefix1;
             this.prefix2 = prefix2;
+            this.invertedMapping = invertedMapping;
         }
 
         public String getPrefixOne() { return prefix1; }
         public String getPrefixTwo() { return prefix2; }
         public String getAtlasRelationshipTypeName() { return atlasRelationshipTypeName; }
         public String getOmrsRelationshipTypeName() { return omrsRelationshipTypeName; }
+        public boolean isInvertedMapping() { return invertedMapping; }
 
     }
 

@@ -433,6 +433,7 @@
   {
     "atlas": "hive_table_db",
     "omrs": "AssetSchemaType",
+    "invertedEndpoints": true,
     "endpointMappings": [
       {
         "omrs": "describesAssets",
