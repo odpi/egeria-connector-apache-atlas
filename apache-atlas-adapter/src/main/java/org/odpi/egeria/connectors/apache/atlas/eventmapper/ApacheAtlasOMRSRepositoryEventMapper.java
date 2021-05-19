@@ -261,24 +261,30 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
         // Send an event for every entity: normal and generated
         Map<String, String> omrsTypesByPrefix = typeDefStore.getAllMappedOMRSTypeDefNames(atlasEntityHeader.getTypeName());
         if (omrsTypesByPrefix != null) {
-            for (String prefix : omrsTypesByPrefix.keySet()) {
-                EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
-                if (entityDetail != null) {
-                    // TODO: find a way to pull back the old version to send in the update event
-                    //  (for now we will just fake one based on the latest version of the entity)
-                    EntityDetail oldE = new EntityDetail(entityDetail);
-                    oldE.setProperties(null);
-                    oldE.setVersion(-1L);
-                    repositoryEventProcessor.processUpdatedEntityEvent(
-                            sourceName,
-                            metadataCollectionId,
-                            originatorServerName,
-                            originatorServerType,
-                            localOrganizationName,
-                            oldE,
-                            entityDetail
-                    );
-                    if (prefix != null) {
+            // Note: these mappings will be for both entities and self-referencing relationships.
+            for (Map.Entry<String, String> entry : omrsTypesByPrefix.entrySet()) {
+                String prefix = entry.getKey();
+                String omrsTypeName = entry.getValue();
+                // We need to ensure this OMRS type is actually for an entity before attempting to map it as one
+                TypeDef typeDef = typeDefStore.getTypeDefByName(omrsTypeName);
+                if (typeDef.getCategory() == TypeDefCategory.ENTITY_DEF) {
+                    EntityDetail entityDetail = getMappedEntity(atlasEntityHeader, prefix);
+                    if (entityDetail != null) {
+                        // TODO: find a way to pull back the old version to send in the update event
+                        //  (for now we will just fake one based on the latest version of the entity)
+                        EntityDetail oldE = new EntityDetail(entityDetail);
+                        oldE.setProperties(null);
+                        oldE.setVersion(-1L);
+                        repositoryEventProcessor.processUpdatedEntityEvent(
+                                sourceName,
+                                metadataCollectionId,
+                                originatorServerName,
+                                originatorServerType,
+                                localOrganizationName,
+                                oldE,
+                                entityDetail
+                        );
+                        // If the entity was mapped, also send events for any self-referencing (generated) relationships
                         List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, entityDetail);
                         for (Relationship generatedRelationship : generatedRelationships) {
                             // TODO: find a way to pull back the old version to send in the update event
