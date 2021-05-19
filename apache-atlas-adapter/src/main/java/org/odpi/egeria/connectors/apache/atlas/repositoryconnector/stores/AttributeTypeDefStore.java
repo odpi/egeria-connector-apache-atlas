@@ -4,7 +4,7 @@ package org.odpi.egeria.connectors.apache.atlas.repositoryconnector.stores;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.odpi.egeria.connectors.apache.atlas.repositoryconnector.mapping.MappingFromFile;
+import org.odpi.egeria.connectors.apache.atlas.repositoryconnector.model.MappingFromFile;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.AttributeTypeDef;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.AttributeTypeDefCategory;
 import org.odpi.openmetadata.repositoryservices.connectors.stores.metadatacollectionstore.properties.typedefs.EnumDef;

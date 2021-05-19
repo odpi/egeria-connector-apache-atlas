@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright Contributors to the ODPi Egeria project. */
-package org.odpi.egeria.connectors.apache.atlas.repositoryconnector.mapping;
+package org.odpi.egeria.connectors.apache.atlas.repositoryconnector.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -37,10 +37,16 @@ public class MappingFromFile {
     private List<MappingFromFile> propertyMappings;
 
     /**
-     * An array of mappings between Apache Atlas endpoint property names and OMRS endpoing property names,
+     * An array of mappings between Apache Atlas endpoint property names and OMRS endpoint property names,
      * for any relationship TypeDefs
      */
     private List<MappingFromFile> endpointMappings;
+
+    /**
+     * Indicates whether the endpoints for an endpointMapping should be inverted when translating between
+     * Egeria and Apache Atlas
+     */
+    private boolean invertedEndpoints = false;
 
     @JsonProperty("atlas") public String getAtlasName() { return this.atlas; }
     @JsonProperty("atlas") public void setAtlasName(String atlas) { this.atlas = atlas; }
@@ -56,6 +62,9 @@ public class MappingFromFile {
 
     @JsonProperty("endpointMappings") public List<MappingFromFile> getEndpointMappings() { return this.endpointMappings; }
     @JsonProperty("endpointMappings") public void setEndpointMappings(List<MappingFromFile> endpointMappings) { this.endpointMappings = endpointMappings; }
+
+    @JsonProperty("invertedEndpoints") public boolean getInvertedEndpoints() { return invertedEndpoints; }
+    @JsonProperty("invertedEndpoints") public void setInvertedEndpoints(boolean invertEndpoints) { this.invertedEndpoints = invertedEndpoints; }
 
     @JsonIgnore public boolean isGeneratedType() { return this.prefix != null; }
 
