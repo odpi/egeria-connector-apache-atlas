@@ -364,11 +364,11 @@ public class EntityMappingAtlas2OMRS {
             summary = atlasRepositoryConnector.getRepositoryHelper().getSkeletonEntitySummary(
                     atlasRepositoryConnector.getRepositoryName(),
                     atlasRepositoryConnector.getMetadataCollectionId(),
-                    atlasRepositoryConnector.getMetadataCollectionName(),
                     InstanceProvenanceType.LOCAL_COHORT,
                     userId,
                     omrsTypeDefName
             );
+            summary.setMetadataCollectionName(atlasRepositoryConnector.getMetadataCollectionName());
             String guid = atlasEntity.getGuid();
             AtlasGuid atlasGuid = new AtlasGuid(guid, prefix);
             summary.setGUID(atlasGuid.toString());
@@ -396,11 +396,11 @@ public class EntityMappingAtlas2OMRS {
             detail = atlasRepositoryConnector.getRepositoryHelper().getSkeletonEntity(
                     atlasRepositoryConnector.getRepositoryName(),
                     atlasRepositoryConnector.getMetadataCollectionId(),
-                    atlasRepositoryConnector.getMetadataCollectionName(),
                     InstanceProvenanceType.LOCAL_COHORT,
                     userId,
                     omrsTypeDefName
             );
+            detail.setMetadataCollectionName(atlasRepositoryConnector.getMetadataCollectionName());
             switch(atlasEntity.getStatus()) {
                 case ACTIVE:
                     detail.setStatus(InstanceStatus.ACTIVE);
@@ -503,9 +503,6 @@ public class EntityMappingAtlas2OMRS {
                         // TODO: currently hard-coded to ASSIGNED classifications, need to also handle PROPAGATED
                         Classification classification = atlasRepositoryConnector.getRepositoryHelper().getNewClassification(
                                 repositoryName,
-                                atlasRepositoryConnector.getMetadataCollectionId(),
-                                atlasRepositoryConnector.getMetadataCollectionName(),
-                                InstanceProvenanceType.LOCAL_COHORT,
                                 userId,
                                 atlasClassificationName,
                                 omrsTypeDefName,
@@ -513,6 +510,9 @@ public class EntityMappingAtlas2OMRS {
                                 null,
                                 omrsClassificationProperties
                         );
+                        classification.setMetadataCollectionId(atlasRepositoryConnector.getMetadataCollectionId());
+                        classification.setMetadataCollectionName(atlasRepositoryConnector.getMetadataCollectionName());
+                        classification.setInstanceProvenanceType(InstanceProvenanceType.LOCAL_COHORT);
                         // Setting classification mod details based on the overall entity (nothing more fine-grained in Atlas)
                         classification.setCreatedBy(omrsObj.getCreatedBy());
                         classification.setCreateTime(omrsObj.getCreateTime());
