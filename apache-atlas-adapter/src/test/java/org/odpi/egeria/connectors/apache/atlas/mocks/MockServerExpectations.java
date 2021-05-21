@@ -149,9 +149,11 @@ public class MockServerExpectations implements PluginExpectationInitializer {
         mockServerClient
                 .when(typedefsRequest(), Times.exactly(1))
                 .respond(withResponse(getResourceFileContents("types_vanilla.json")));
-        mockServerClient
+        // Not clear why the below is failing locally, but it causes a 'Connection reset by peer' error,
+        // and does not actually appear to be used in any test cases -- so leaving out for now.
+        /*mockServerClient
                 .when(typedefsRequest())
-                .respond(withResponse(getResourceFileContents("types_updated.json")));
+                .respond(withResponse(getResourceFileContents("types_updated.json")));*/
     }
 
     private void setTypeDetails(MockServerClient mockServerClient, String typeFilename) {
