@@ -431,46 +431,124 @@
     ]
   },
   {
-    "atlas": "hive_table_db",
-    "omrs": "AssetSchemaType",
-    "invertedEndpoints": true,
-    "endpointMappings": [
-      {
-        "omrs": "describesAssets",
-        "atlas": "db"
-      },
-      {
-        "omrs": "schema",
-        "atlas": "tables",
-        "prefix": "RTT"
-      }
-    ]
-  },
-  {
-    "atlas": "hive_storagedesc",
+    "atlas": "hive_db",
     "omrs": "RelationalDBSchemaType",
+    "prefix": "RDBST",
     "propertyMappings": [
       {
         "atlas": "qualifiedName",
         "omrs": "qualifiedName"
       },
       {
-        "atlas": "inputFormat",
+        "atlas": "location",
+        "omrs": "namespace"
+      },
+      {
+        "atlas": "name",
+        "omrs": "displayName"
+      },
+      {
+        "atlas": "owner",
+        "omrs": "author"
+      },
+      {
+        "atlas": "typeName",
         "omrs": "encodingStandard"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
       }
     ]
   },
   {
-    "atlas": "hive_table_storagedesc",
+    "atlas": "hive_db",
+    "omrs": "DeployedDatabaseSchema",
+    "prefix": "DDS",
+    "propertyMappings": [
+      {
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
+      },
+      {
+        "atlas": "name",
+        "omrs": "name"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
+      }
+    ]
+  },
+  {
+    "atlas": "hive_db",
+    "omrs": "DataContentForDataSet",
+    "prefix": "HDBDCDS",
+    "endpointMappings": [
+      {
+        "omrs": "dataContent"
+      },
+      {
+        "omrs": "supportedDataSets",
+        "prefix": "DDS"
+      }
+    ]
+  },
+  {
+    "atlas": "hive_db",
+    "omrs": "AssetSchemaType",
+    "prefix": "HDBAST",
+    "endpointMappings": [
+      {
+        "omrs": "describesAssets",
+        "prefix": "DDS"
+      },
+      {
+        "omrs": "schema",
+        "prefix": "RDBST"
+      }
+    ]
+  },
+  {
+    "atlas": "hive_table_db",
     "omrs": "AttributeForSchema",
+    "invertedEndpoints": true,
     "endpointMappings": [
       {
         "omrs": "parentSchemas",
-        "atlas": "sd"
+        "atlas": "db",
+        "prefix": "RDBST"
       },
       {
         "omrs": "attributes",
-        "atlas": "table"
+        "atlas": "tables"
+      }
+    ]
+  },
+  {
+    "atlas": "hive_table",
+    "omrs": "RelationalTableType",
+    "prefix": "RTT",
+    "propertyMappings": [
+      {
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
+      },
+      {
+        "atlas": "name",
+        "omrs": "displayName"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
+      },
+      {
+        "atlas": "owner",
+        "omrs": "author"
+      },
+      {
+        "atlas": "tableType",
+        "omrs": "encodingStandard"
       }
     ]
   },
@@ -493,39 +571,6 @@
       {
         "atlas": "tableType",
         "omrs": "nativeClass"
-      }
-    ]
-  },
-  {
-    "atlas": "hive_table",
-    "omrs": "RelationalTableType",
-    "prefix": "RTT",
-    "propertyMappings": [
-      {
-        "atlas": "qualifiedName",
-        "omrs": "qualifiedName"
-      },
-      {
-        "atlas": "name",
-        "omrs": "displayName"
-      },
-      {
-        "atlas": "owner",
-        "omrs": "author"
-      }
-    ]
-  },
-  {
-    "atlas": "hive_table",
-    "omrs": "SchemaAttributeType",
-    "prefix": "RTTSAT",
-    "endpointMappings": [
-      {
-        "omrs": "usedInSchemas"
-      },
-      {
-        "omrs": "type",
-        "prefix": "RTT"
       }
     ]
   },
