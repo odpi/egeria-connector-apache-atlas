@@ -196,10 +196,8 @@ public class MockServerExpectations implements PluginExpectationInitializer {
                 .respond(withResponse(getResourceFileContents("by_case" + File.separator + caseName + File.separator + "results_ANY.json")));
         mockServerClient
                 .when(basicSearchRequest(
-                        json(
-                                "{\"typeName\":\"hbase_column_family\",\"excludeDeletedEntities\":false,\"includeClassificationAttributes\":true}",
-                                MatchType.ONLY_MATCHING_FIELDS
-                        )))
+                        "{\"typeName\":\"hbase_column_family\",\"excludeDeletedEntities\":false,\"includeClassificationAttributes\":true,\"includeSubTypes\":true,\"includeSubClassifications\":true,\"limit\":100,\"offset\":0,\"entityFilters\":{}}"
+                        ))
                 .respond(withResponse(getResourceFileContents("by_case" + File.separator + caseName + File.separator + "results_all.json")));
         mockServerClient
                 .when(basicSearchRequest(

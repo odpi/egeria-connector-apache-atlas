@@ -284,7 +284,7 @@ public class ConnectorTest {
         TypeDefStore.EndpointMapping endpointMapping = typeDefStore.getEndpointMappingFromAtlasName(nonExistentType, null);
         assertNull(endpointMapping);
 
-        Map<String, String> map = typeDefStore.getAllMappedAtlasTypeDefNames(nonExistentType);
+        Map<String, Set<String>> map = typeDefStore.getAllMappedAtlasTypeDefNames(nonExistentType);
         assertTrue(map.isEmpty());
         map = typeDefStore.getAllMappedAtlasTypeDefNames(classification);
         assertNotNull(map);
@@ -295,10 +295,10 @@ public class ConnectorTest {
         name = typeDefStore.getMappedOMRSTypeDefName(classification, null);
         assertEquals(name, classification);
 
-        map = typeDefStore.getMappedOMRSTypeDefNameWithPrefixes(nonExistentType);
-        assertTrue(map.isEmpty());
-        map = typeDefStore.getMappedOMRSTypeDefNameWithPrefixes(classification);
-        assertFalse(map.isEmpty());
+        Map<String, String> map2 = typeDefStore.getMappedOMRSTypeDefNameWithPrefixes(nonExistentType);
+        assertTrue(map2.isEmpty());
+        map2 = typeDefStore.getMappedOMRSTypeDefNameWithPrefixes(classification);
+        assertFalse(map2.isEmpty());
 
         assertNull(typeDefStore.getAllTypeDefAttributesForName(nonExistentType));
 
@@ -648,8 +648,8 @@ public class ConnectorTest {
 
         final String methodName = "testSearchByProperty";
 
-        String typeGUID = "248975ec-8019-4b8a-9caf-084c8b724233";
-        String typeName = "TabularSchemaType";
+        String typeGUID = "f0438d80-6eb9-4fac-bcc1-5efee5babcfc";
+        String typeName = "RelationalColumnType";
 
         InstanceProperties ip = new InstanceProperties();
 
@@ -697,7 +697,7 @@ public class ConnectorTest {
         ip = repositoryHelper.addStringPropertyToInstance(sourceName, ip, "qualifiedName", repositoryHelper.getExactMatchRegex("default:atlas_janus@Sandbox"), methodName);
         testFindEntitiesByProperty(
                 null,
-                "DataSet",
+                "RelationalTable",
                 ip,
                 MatchCriteria.ALL,
                 5,
@@ -721,8 +721,8 @@ public class ConnectorTest {
 
         final String methodName = "testSearchByPropertySorting";
 
-        String typeGUID = "248975ec-8019-4b8a-9caf-084c8b724233";
-        String typeName = "TabularSchemaType";
+        String typeGUID = "aa8d5470-6dbc-4648-9e2f-045e5df9d2f9";
+        String typeName = "RelationalColumn";
 
         InstanceProperties ip = new InstanceProperties();
 
@@ -878,9 +878,9 @@ public class ConnectorTest {
     @Test
     public void testSearchByPropertyValue() {
 
-        String typeGUID = "248975ec-8019-4b8a-9caf-084c8b724233";
+        String typeGUID = "f0438d80-6eb9-4fac-bcc1-5efee5babcfc";
         Set<String> possibleTypes = new HashSet<>();
-        possibleTypes.add("TabularSchemaType");
+        possibleTypes.add("RelationalColumnType");
 
         // Search by detailed type GUID first
         testFindEntitiesByPropertyValue(
@@ -891,9 +891,9 @@ public class ConnectorTest {
                 MockConstants.EGERIA_PAGESIZE,
                 10);
 
-        // TODO: Same search again, by supertype
+        // Same search again, by supertype
         testFindEntitiesByPropertyValue(
-                "786a6199-0ce8-47bf-b006-9ace1c5510e4",
+                "a7392281-348d-48a4-bad7-f9742d7696fe",
                 possibleTypes,
                 null,
                 repositoryHelper.getExactMatchRegex("atlas"),
@@ -1218,7 +1218,7 @@ public class ConnectorTest {
             atlasRepositoryEventMapper.disconnect();
             atlasRepositoryConnector.disconnect();
         } catch (ConnectorCheckedException e) {
-            log.error("Unable to property disconnect connector.", e);
+            log.error("Unable to properly disconnect connector.", e);
         }
     }
 

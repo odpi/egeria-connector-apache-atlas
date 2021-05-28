@@ -80,7 +80,7 @@
   },
   {
     "atlas": "hbase_namespace",
-    "omrs": "DataStore",
+    "omrs": "Database",
     "propertyMappings": [
       {
         "atlas": "qualifiedName",
@@ -180,8 +180,99 @@
     ]
   },
   {
+    "atlas": "hbase_namespace",
+    "omrs": "DeployedDatabaseSchema",
+    "prefix": "HBNDDS",
+    "propertyMappings": [
+      {
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
+      },
+      {
+        "atlas": "name",
+        "omrs": "name"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
+      }
+    ]
+  },
+  {
+    "atlas": "hbase_namespace",
+    "omrs": "RelationalDBSchemaType",
+    "prefix": "HBNRDBST",
+    "propertyMappings": [
+      {
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
+      },
+      {
+        "atlas": "name",
+        "omrs": "displayName"
+      },
+      {
+        "atlas": "owner",
+        "omrs": "author"
+      },
+      {
+        "atlas": "typeName",
+        "omrs": "encodingStandard"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
+      }
+    ]
+  },
+  {
+    "atlas": "hbase_namespace",
+    "omrs": "DataContentForDataSet",
+    "prefix": "HBNDCDS",
+    "endpointMappings": [
+      {
+        "omrs": "dataContent"
+      },
+      {
+        "omrs": "supportedDataSets",
+        "prefix": "HBNDDS"
+      }
+    ]
+  },
+  {
+    "atlas": "hbase_namespace",
+    "omrs": "AssetSchemaType",
+    "prefix": "HBNAST",
+    "endpointMappings": [
+      {
+        "omrs": "describesAssets",
+        "prefix": "HBNDDS"
+      },
+      {
+        "omrs": "schema",
+        "prefix": "HBNRDBST"
+      }
+    ]
+  },
+  {
+    "atlas": "hbase_table_namespace",
+    "omrs": "AttributeForSchema",
+    "invertedEndpoints": true,
+    "endpointMappings": [
+      {
+        "omrs": "parentSchemas",
+        "atlas": "namespace",
+        "prefix": "HBNRDBST"
+      },
+      {
+        "omrs": "attributes",
+        "atlas": "tables"
+      }
+    ]
+  },
+  {
     "atlas": "hbase_table",
-    "omrs": "DataSet",
+    "omrs": "RelationalTable",
     "propertyMappings": [
       {
         "atlas": "qualifiedName",
@@ -202,31 +293,60 @@
     ]
   },
   {
-    "atlas": "hbase_table_namespace",
-    "omrs": "DataContentForDataSet",
-    "endpointMappings": [
+    "atlas": "hbase_table",
+    "omrs": "RelationalTableType",
+    "prefix": "HBRTT",
+    "propertyMappings": [
       {
-        "atlas": "namespace",
-        "omrs": "dataContent"
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
       },
       {
-        "atlas": "tables",
-        "omrs": "supportedDataSets"
+        "atlas": "name",
+        "omrs": "name"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
+      },
+      {
+        "atlas": "owner",
+        "omrs": "owner"
       }
     ]
   },
   {
-    "omrs": "SchemaElement"
-  },
-  {
-    "omrs": "SchemaType"
-  },
-  {
-    "omrs": "ComplexSchemaType"
+    "atlas": "hbase_table",
+    "omrs": "SchemaAttributeType",
+    "prefix": "HBTSAT",
+    "endpointMappings": [
+      {
+        "omrs": "usedInSchemas"
+      },
+      {
+        "omrs": "type",
+        "prefix": "HBRTT"
+      }
+    ]
   },
   {
     "atlas": "hbase_column_family",
-    "omrs": "TabularSchemaType",
+    "omrs": "RelationalColumn",
+    "propertyMappings": [
+      {
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
+      },
+      {
+        "atlas": "name",
+        "omrs": "displayName"
+      }
+    ]
+  },
+  {
+    "atlas": "hbase_column_family",
+    "omrs": "RelationalColumnType",
+    "prefix": "HCFRCT",
     "propertyMappings": [
       {
         "atlas": "qualifiedName",
@@ -247,53 +367,45 @@
     ]
   },
   {
-    "atlas": "hbase_table_column_families",
-    "omrs": "AssetSchemaType",
+    "atlas": "hbase_column_family",
+    "omrs": "SchemaAttributeType",
+    "prefix": "HCFSAT",
     "endpointMappings": [
       {
-        "atlas": "table",
-        "omrs": "describesAssets"
+        "omrs": "usedInSchemas"
       },
       {
-        "atlas": "column_families",
-        "omrs": "schema"
+        "omrs": "type",
+        "prefix": "HCFRCT"
       }
     ]
   },
   {
-    "omrs": "SchemaAttribute"
-  },
-  {
-    "atlas": "hbase_column",
-    "omrs": "TabularColumn",
-    "propertyMappings": [
-      {
-        "atlas": "qualifiedName",
-        "omrs": "qualifiedName"
-      },
-      {
-        "atlas": "name",
-        "omrs": "displayName"
-      },
-      {
-        "atlas": "description",
-        "omrs": "description"
-      }
-    ]
-  },
-  {
-    "atlas": "hbase_column_family_columns",
+    "atlas": "hbase_table_column_families",
     "omrs": "AttributeForSchema",
     "endpointMappings": [
       {
-        "atlas": "column_family",
-        "omrs": "parentSchemas"
+        "omrs": "parentSchemas",
+        "atlas": "table",
+        "prefix": "HBRTT"
       },
       {
-        "atlas": "columns",
-        "omrs": "attributes"
+        "omrs": "attributes",
+        "atlas": "columns"
       }
     ]
+  },
+  {
+    "omrs": "SchemaElement"
+  },
+  {
+    "omrs": "SchemaType"
+  },
+  {
+    "omrs": "ComplexSchemaType"
+  },
+  {
+    "omrs": "SchemaAttribute"
   },
   {
     "atlas": "hdfs_path",
@@ -432,8 +544,27 @@
   },
   {
     "atlas": "hive_db",
+    "omrs": "DeployedDatabaseSchema",
+    "prefix": "HDBDDS",
+    "propertyMappings": [
+      {
+        "atlas": "qualifiedName",
+        "omrs": "qualifiedName"
+      },
+      {
+        "atlas": "name",
+        "omrs": "name"
+      },
+      {
+        "atlas": "description",
+        "omrs": "description"
+      }
+    ]
+  },
+  {
+    "atlas": "hive_db",
     "omrs": "RelationalDBSchemaType",
-    "prefix": "RDBST",
+    "prefix": "HDBRDBST",
     "propertyMappings": [
       {
         "atlas": "qualifiedName",
@@ -463,25 +594,6 @@
   },
   {
     "atlas": "hive_db",
-    "omrs": "DeployedDatabaseSchema",
-    "prefix": "DDS",
-    "propertyMappings": [
-      {
-        "atlas": "qualifiedName",
-        "omrs": "qualifiedName"
-      },
-      {
-        "atlas": "name",
-        "omrs": "name"
-      },
-      {
-        "atlas": "description",
-        "omrs": "description"
-      }
-    ]
-  },
-  {
-    "atlas": "hive_db",
     "omrs": "DataContentForDataSet",
     "prefix": "HDBDCDS",
     "endpointMappings": [
@@ -490,7 +602,7 @@
       },
       {
         "omrs": "supportedDataSets",
-        "prefix": "DDS"
+        "prefix": "HDBDDS"
       }
     ]
   },
@@ -501,11 +613,11 @@
     "endpointMappings": [
       {
         "omrs": "describesAssets",
-        "prefix": "DDS"
+        "prefix": "HDBDDS"
       },
       {
         "omrs": "schema",
-        "prefix": "RDBST"
+        "prefix": "HDBRDBST"
       }
     ]
   },
@@ -517,7 +629,7 @@
       {
         "omrs": "parentSchemas",
         "atlas": "db",
-        "prefix": "RDBST"
+        "prefix": "HDBRDBST"
       },
       {
         "omrs": "attributes",
@@ -528,7 +640,7 @@
   {
     "atlas": "hive_table",
     "omrs": "RelationalTableType",
-    "prefix": "RTT",
+    "prefix": "HRTT",
     "propertyMappings": [
       {
         "atlas": "qualifiedName",
@@ -571,6 +683,20 @@
       {
         "atlas": "tableType",
         "omrs": "nativeClass"
+      }
+    ]
+  },
+  {
+    "atlas": "hive_table",
+    "omrs": "SchemaAttributeType",
+    "prefix": "HTSAT",
+    "endpointMappings": [
+      {
+        "omrs": "usedInSchemas"
+      },
+      {
+        "omrs": "type",
+        "prefix": "HRTT"
       }
     ]
   },
@@ -649,7 +775,7 @@
       {
         "omrs": "parentSchemas",
         "atlas": "table",
-        "prefix": "RTT"
+        "prefix": "HRTT"
       },
       {
         "omrs": "attributes",
