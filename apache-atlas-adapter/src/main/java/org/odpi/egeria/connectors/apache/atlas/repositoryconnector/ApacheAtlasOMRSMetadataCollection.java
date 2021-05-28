@@ -1217,8 +1217,8 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
 
             // Add all textual properties of the provided entity as matchProperties,
             //  for an OR-based search of their values
-            Map<String, Map<String, String>> mappingsToSearch = getMappingsToSearch(entityTypeGUID, userId);
-            for (Map.Entry<String, Map<String, String>> entryToSearch : mappingsToSearch.entrySet()) {
+            Map<String, Map<String, Set<String>>> mappingsToSearch = getMappingsToSearch(entityTypeGUID, userId);
+            for (Map.Entry<String, Map<String, Set<String>>> entryToSearch : mappingsToSearch.entrySet()) {
 
                 String omrsTypeName = entryToSearch.getKey();
                 String omrsTypeGUID = typeDefStore.getTypeDefByName(omrsTypeName).getGUID();
@@ -1639,14 +1639,14 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
      *
      * @param entityTypeGUID the GUID of the OMRS entity type for which to search
      * @param userId the userId through which to search
-     * @return {@code Map<String, Map<String, String>>}
+     * @return {@code Map<String, Map<String, Set<String>>>}
      * @throws RepositoryErrorException on any unexpected error
      */
-    private Map<String, Map<String, String>> getMappingsToSearch(String entityTypeGUID, String userId) throws
+    private Map<String, Map<String, Set<String>>> getMappingsToSearch(String entityTypeGUID, String userId) throws
             RepositoryErrorException {
 
-        Map<String, Map<String, String>> results = new HashMap<>();
-        Map<String, String> atlasTypeNamesByPrefix = new HashMap<>();
+        Map<String, Map<String, Set<String>>> results = new HashMap<>();
+        Map<String, Set<String>> atlasTypeNamesByPrefix = new HashMap<>();
         String requestedTypeName = null;
         if (entityTypeGUID != null) {
             TypeDef typeDef = typeDefStore.getTypeDefByGUID(entityTypeGUID, false);
@@ -1663,7 +1663,9 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
                 requestedTypeName = unimplemented.getName();
             }
         } else {
-            atlasTypeNamesByPrefix.put(null, "Referenceable");
+            Set<String> set = new HashSet<>();
+            set.add("Referenceable");
+            atlasTypeNamesByPrefix.put(null, set);
             results.put("Referenceable", atlasTypeNamesByPrefix);
         }
 
@@ -1677,7 +1679,7 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
                     if (!typeDefName.equals("Referenceable")
                             && !typeDefStore.isUnimplementedSupertype(typeDefName)
                             && repositoryHelper.isTypeOf(metadataCollectionId, typeDefName, requestedTypeName)) {
-                        Map<String, String> mappings = typeDefStore.getAllMappedAtlasTypeDefNames(typeDefName);
+                        Map<String, Set<String>> mappings = typeDefStore.getAllMappedAtlasTypeDefNames(typeDefName);
                         if (!mappings.isEmpty()) {
                             results.put(typeDefName, mappings);
                         }
@@ -1734,190 +1736,193 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
         // If we need to order the results, it will probably be more efficient to use Atlas's DSL query language
         // to do the search
         boolean skipSearch = false;
-        StringBuilder sb = new StringBuilder();
 
         // Run multiple searches, if there are multiple types mapped to the OMRS type...
-        Map<String, Map<String, String>> mappingsToSearch = getMappingsToSearch(entityTypeGUID, userId);
+        Map<String, Map<String, Set<String>>> mappingsToSearch = getMappingsToSearch(entityTypeGUID, userId);
         List<AtlasSearchResult> totalResults = new ArrayList<>();
-        for (Map.Entry<String, Map<String, String>> entryToSearch : mappingsToSearch.entrySet()) {
+        for (Map.Entry<String, Map<String, Set<String>>> entryToSearch : mappingsToSearch.entrySet()) {
             String omrsTypeName = entryToSearch.getKey();
-            Map<String, String> atlasTypeNamesByPrefix = entryToSearch.getValue();
+            Map<String, Set<String>> atlasTypeNamesByPrefix = entryToSearch.getValue();
 
-            for (Map.Entry<String, String> entry : atlasTypeNamesByPrefix.entrySet()) {
+            for (Map.Entry<String, Set<String>> entry : atlasTypeNamesByPrefix.entrySet()) {
 
                 String prefix = entry.getKey();
-                String atlasTypeName = entry.getValue();
-                Map<String, String> omrsPropertyMap = typeDefStore.getPropertyMappingsForOMRSTypeDef(omrsTypeName, prefix);
+                Set<String> atlasTypeNames = entry.getValue();
 
-                sb.append("from ");
-                sb.append(atlasTypeName);
-                boolean bWhereClauseAdded = false;
+                for (String atlasTypeName : atlasTypeNames) {
+                    Map<String, String> omrsPropertyMap = typeDefStore.getPropertyMappingsForOMRSTypeDef(omrsTypeName, prefix);
 
-                // Add the multiple classification criteria, if requested
-                // (recall that OMRS classification name should be identical to Atlas classification name -- no translation needed)
-                if (limitResultsByClassification != null) {
-                    List<String> classifications = new ArrayList<>();
-                    for (String classificationName : limitResultsByClassification) {
-                        classifications.add(atlasTypeName + " isa " + classificationName);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("from ");
+                    sb.append(atlasTypeName);
+                    boolean bWhereClauseAdded = false;
+
+                    // Add the multiple classification criteria, if requested
+                    // (recall that OMRS classification name should be identical to Atlas classification name -- no translation needed)
+                    if (limitResultsByClassification != null) {
+                        List<String> classifications = new ArrayList<>();
+                        for (String classificationName : limitResultsByClassification) {
+                            classifications.add(atlasTypeName + " isa " + classificationName);
+                        }
+                        if (!classifications.isEmpty()) {
+                            sb.append(" where ");
+                            sb.append(String.join(" and ", classifications));
+                            bWhereClauseAdded = true;
+                        }
                     }
-                    if (!classifications.isEmpty()) {
-                        sb.append(" where ");
-                        sb.append(String.join(" and ", classifications));
-                        bWhereClauseAdded = true;
-                    }
-                }
 
-                // Add match properties, if requested
-                if (matchProperties != null) {
-                    List<String> propertyCriteria = new ArrayList<>();
-                    Map<String, InstancePropertyValue> properties = matchProperties.getInstanceProperties();
-                    // By default, include only Referenceable's properties (as these will be the only properties that exist
-                    // across ALL entity types)
-                    Map<String, TypeDefAttribute> omrsAttrTypeDefs = typeDefStore.getAllTypeDefAttributesForName(omrsTypeName);
-                    if (properties != null) {
-                        for (Map.Entry<String, InstancePropertyValue> property : properties.entrySet()) {
-                            String omrsPropertyName = property.getKey();
-                            InstancePropertyValue value = property.getValue();
-                            boolean added = addSearchConditionFromValue(
-                                    propertyCriteria,
-                                    omrsPropertyName,
-                                    value,
-                                    omrsPropertyMap,
-                                    omrsAttrTypeDefs,
-                                    (matchCriteria != null) && matchCriteria.equals(MatchCriteria.NONE),
-                                    true
-                            );
-                            if (!added) {
-                                if (matchCriteria == null || matchCriteria.equals(MatchCriteria.ALL)) {
-                                    // If we are asked to find everything, but one of the properties cannot be searched,
-                                    // then we should skip the search
-                                    skipSearch = true;
-                                    log.info("Skipping search ({}) -- ALL criteria should match, but this one is unmapped: {}", entityTypeGUID, omrsPropertyName);
+                    // Add match properties, if requested
+                    if (matchProperties != null) {
+                        List<String> propertyCriteria = new ArrayList<>();
+                        Map<String, InstancePropertyValue> properties = matchProperties.getInstanceProperties();
+                        // By default, include only Referenceable's properties (as these will be the only properties that exist
+                        // across ALL entity types)
+                        Map<String, TypeDefAttribute> omrsAttrTypeDefs = typeDefStore.getAllTypeDefAttributesForName(omrsTypeName);
+                        if (properties != null) {
+                            for (Map.Entry<String, InstancePropertyValue> property : properties.entrySet()) {
+                                String omrsPropertyName = property.getKey();
+                                InstancePropertyValue value = property.getValue();
+                                boolean added = addSearchConditionFromValue(
+                                        propertyCriteria,
+                                        omrsPropertyName,
+                                        value,
+                                        omrsPropertyMap,
+                                        omrsAttrTypeDefs,
+                                        (matchCriteria != null) && matchCriteria.equals(MatchCriteria.NONE),
+                                        true
+                                );
+                                if (!added) {
+                                    if (matchCriteria == null || matchCriteria.equals(MatchCriteria.ALL)) {
+                                        // If we are asked to find everything, but one of the properties cannot be searched,
+                                        // then we should skip the search
+                                        skipSearch = true;
+                                        log.info("Skipping search ({}) -- ALL criteria should match, but this one is unmapped: {}", entityTypeGUID, omrsPropertyName);
+                                    }
                                 }
                             }
                         }
-                    }
-                    if (!propertyCriteria.isEmpty()) {
-                        String propertyMatchDelim = " and ";
-                        if (matchCriteria != null && matchCriteria.equals(MatchCriteria.ANY)) {
-                            propertyMatchDelim = " or ";
+                        if (!propertyCriteria.isEmpty()) {
+                            String propertyMatchDelim = " and ";
+                            if (matchCriteria != null && matchCriteria.equals(MatchCriteria.ANY)) {
+                                propertyMatchDelim = " or ";
+                            }
+                            if (!bWhereClauseAdded) {
+                                sb.append(" where");
+                            }
+                            sb.append(" ");
+                            sb.append(String.join(propertyMatchDelim, propertyCriteria));
                         }
-                        if (!bWhereClauseAdded) {
-                            sb.append(" where");
-                        }
-                        sb.append(" ");
-                        sb.append(String.join(propertyMatchDelim, propertyCriteria));
                     }
-                }
 
-                // Add status limiters, if requested
-                boolean unsupportedStatusRequested = false;
-                if (limitResultsByStatus != null) {
-                    List<String> states = new ArrayList<>();
-                    Set<InstanceStatus> limitSet = new HashSet<>(limitResultsByStatus);
-                    for (InstanceStatus requestedStatus : limitSet) {
-                        switch (requestedStatus) {
-                            case ACTIVE:
-                                states.add("__state = 'ACTIVE'");
-                                break;
-                            case DELETED:
-                                states.add("__state = 'DELETED'");
-                                break;
-                            default:
-                                unsupportedStatusRequested = true;
-                                break;
+                    // Add status limiters, if requested
+                    boolean unsupportedStatusRequested = false;
+                    if (limitResultsByStatus != null) {
+                        List<String> states = new ArrayList<>();
+                        Set<InstanceStatus> limitSet = new HashSet<>(limitResultsByStatus);
+                        for (InstanceStatus requestedStatus : limitSet) {
+                            switch (requestedStatus) {
+                                case ACTIVE:
+                                    states.add("__state = 'ACTIVE'");
+                                    break;
+                                case DELETED:
+                                    states.add("__state = 'DELETED'");
+                                    break;
+                                default:
+                                    unsupportedStatusRequested = true;
+                                    break;
+                            }
+                        }
+                        if (!states.isEmpty()) {
+                            if (!bWhereClauseAdded) {
+                                sb.append(" where");
+                            }
+                            sb.append(" ");
+                            sb.append(String.join(" or ", states));
+                        } else if (unsupportedStatusRequested) {
+                            // We are searching only for a state that Atlas does not support, so we should ensure no
+                            // results are returned (in fact, skip searching entirely).
+                            skipSearch = true;
+                            log.info("Skipping search ({}) -- one or more unsupported statuses requested: {}", entityTypeGUID, limitSet);
                         }
                     }
-                    if (!states.isEmpty()) {
-                        if (!bWhereClauseAdded) {
-                            sb.append(" where");
-                        }
-                        sb.append(" ");
-                        sb.append(String.join(" or ", states));
-                    } else if (unsupportedStatusRequested) {
-                        // We are searching only for a state that Atlas does not support, so we should ensure no
-                        // results are returned (in fact, skip searching entirely).
-                        skipSearch = true;
-                        log.info("Skipping search ({}) -- one or more unsupported statuses requested: {}", entityTypeGUID, limitSet);
-                    }
-                }
 
-                if (!skipSearch) {
-                    // Add sorting criteria, if requested
-                    if (sequencingOrder != null) {
-                        switch (sequencingOrder) {
-                            case GUID:
-                                sb.append(" orderby __guid asc");
-                                break;
-                            case LAST_UPDATE_OLDEST:
-                                sb.append(" orderby __modificationTimestamp asc");
-                                break;
-                            case LAST_UPDATE_RECENT:
-                                sb.append(" orderby __modificationTimestamp desc");
-                                break;
-                            case CREATION_DATE_OLDEST:
-                                sb.append(" orderby __timestamp asc");
-                                break;
-                            case CREATION_DATE_RECENT:
-                                sb.append(" orderby __timestamp desc");
-                                break;
-                            case PROPERTY_ASCENDING:
-                                if (sequencingProperty != null) {
-                                    String atlasPropertyName = omrsPropertyMap.get(sequencingProperty);
-                                    if (atlasPropertyName != null) {
-                                        sb.append(" orderby ");
-                                        sb.append(atlasPropertyName);
-                                        sb.append(" asc");
-                                    } else {
-                                        log.warn("Unable to find mapped Atlas property for sorting for: {}", sequencingProperty);
-                                        sb.append(" orderby __guid asc");
-                                    }
-                                } else {
-                                    log.warn("No property for sorting provided, defaulting to GUID.");
+                    if (!skipSearch) {
+                        // Add sorting criteria, if requested
+                        if (sequencingOrder != null) {
+                            switch (sequencingOrder) {
+                                case GUID:
                                     sb.append(" orderby __guid asc");
-                                }
-                                break;
-                            case PROPERTY_DESCENDING:
-                                if (sequencingProperty != null) {
-                                    String atlasPropertyName = omrsPropertyMap.get(sequencingProperty);
-                                    if (atlasPropertyName != null) {
-                                        sb.append(" orderby ");
-                                        sb.append(atlasPropertyName);
-                                        sb.append(" desc");
+                                    break;
+                                case LAST_UPDATE_OLDEST:
+                                    sb.append(" orderby __modificationTimestamp asc");
+                                    break;
+                                case LAST_UPDATE_RECENT:
+                                    sb.append(" orderby __modificationTimestamp desc");
+                                    break;
+                                case CREATION_DATE_OLDEST:
+                                    sb.append(" orderby __timestamp asc");
+                                    break;
+                                case CREATION_DATE_RECENT:
+                                    sb.append(" orderby __timestamp desc");
+                                    break;
+                                case PROPERTY_ASCENDING:
+                                    if (sequencingProperty != null) {
+                                        String atlasPropertyName = omrsPropertyMap.get(sequencingProperty);
+                                        if (atlasPropertyName != null) {
+                                            sb.append(" orderby ");
+                                            sb.append(atlasPropertyName);
+                                            sb.append(" asc");
+                                        } else {
+                                            log.warn("Unable to find mapped Atlas property for sorting for: {}", sequencingProperty);
+                                            sb.append(" orderby __guid asc");
+                                        }
                                     } else {
-                                        log.warn("Unable to find mapped Atlas property for sorting for: {}", sequencingProperty);
+                                        log.warn("No property for sorting provided, defaulting to GUID.");
                                         sb.append(" orderby __guid asc");
                                     }
-                                } else {
-                                    log.warn("No property for sorting provided, defaulting to GUID.");
-                                    sb.append(" orderby __guid desc");
-                                }
-                                break;
-                            default:
-                                // Do nothing -- no sorting
-                                break;
+                                    break;
+                                case PROPERTY_DESCENDING:
+                                    if (sequencingProperty != null) {
+                                        String atlasPropertyName = omrsPropertyMap.get(sequencingProperty);
+                                        if (atlasPropertyName != null) {
+                                            sb.append(" orderby ");
+                                            sb.append(atlasPropertyName);
+                                            sb.append(" desc");
+                                        } else {
+                                            log.warn("Unable to find mapped Atlas property for sorting for: {}", sequencingProperty);
+                                            sb.append(" orderby __guid asc");
+                                        }
+                                    } else {
+                                        log.warn("No property for sorting provided, defaulting to GUID.");
+                                        sb.append(" orderby __guid desc");
+                                    }
+                                    break;
+                                default:
+                                    // Do nothing -- no sorting
+                                    break;
+                            }
                         }
-                    }
 
-                    // Add paging criteria, if requested
-                    if (pageSize > 0) {
-                        sb.append(" limit ");
-                        sb.append(pageSize);
-                    }
-                    // TODO: can we use fromEntityElement already here if there is a multi-type map?
-                    if (fromEntityElement > 0) {
-                        sb.append(" offset ");
-                        sb.append(fromEntityElement);
-                    }
+                        // Add paging criteria, if requested
+                        if (pageSize > 0) {
+                            sb.append(" limit ");
+                            sb.append(pageSize);
+                        }
+                        // TODO: can we use fromEntityElement already here if there is a multi-type map?
+                        if (fromEntityElement > 0) {
+                            sb.append(" offset ");
+                            sb.append(fromEntityElement);
+                        }
 
-                    AtlasSearchResult results = null;
-                    try {
-                        results = atlasRepositoryConnector.searchWithDSL(sb.toString());
-                    } catch (AtlasServiceException e) {
-                        raiseRepositoryErrorException(ApacheAtlasOMRSErrorCode.INVALID_SEARCH, methodName, e, sb.toString());
-                    }
-                    if (results != null) {
-                        totalResults.add(results);
+                        AtlasSearchResult results = null;
+                        try {
+                            results = atlasRepositoryConnector.searchWithDSL(sb.toString());
+                        } catch (AtlasServiceException e) {
+                            raiseRepositoryErrorException(ApacheAtlasOMRSErrorCode.INVALID_SEARCH, methodName, e, sb.toString());
+                        }
+                        if (results != null) {
+                            totalResults.add(results);
+                        }
                     }
                 }
 
@@ -1966,107 +1971,109 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
             RepositoryErrorException {
 
         // Run multiple searches, if there are multiple types mapped to the OMRS type...
-        Map<String, Map<String, String>> mappingsToSearch = getMappingsToSearch(entityTypeGUID, userId);
+        Map<String, Map<String, Set<String>>> mappingsToSearch = getMappingsToSearch(entityTypeGUID, userId);
         List<AtlasSearchResult> totalResults = new ArrayList<>();
-        for (Map.Entry<String, Map<String, String>> entryToSearch : mappingsToSearch.entrySet()) {
+        for (Map.Entry<String, Map<String, Set<String>>> entryToSearch : mappingsToSearch.entrySet()) {
             String omrsTypeName = entryToSearch.getKey();
-            Map<String, String> atlasTypeNamesByPrefix = entryToSearch.getValue();
+            Map<String, Set<String>> atlasTypeNamesByPrefix = entryToSearch.getValue();
 
-            for (Map.Entry<String, String> entry : atlasTypeNamesByPrefix.entrySet()) {
+            for (Map.Entry<String, Set<String>> entry : atlasTypeNamesByPrefix.entrySet()) {
 
                 String prefix = entry.getKey();
-                String atlasTypeName = entry.getValue();
+                Set<String> atlasTypeNames = entry.getValue();
 
-                // Otherwise Atlas's "basic" search is likely to be significantly faster
-                SearchParameters searchParameters = new SearchParameters();
-                if (atlasTypeName != null) {
-                    searchParameters.setTypeName(atlasTypeName);
-                }
-                searchParameters.setIncludeClassificationAttributes(true);
-                searchParameters.setIncludeSubClassifications(true);
-                searchParameters.setIncludeSubTypes(true);
-                // TODO: can we use fromEntityElement already here if there is a multi-type map?
-                searchParameters.setOffset(fromEntityElement);
-                searchParameters.setLimit(pageSize);
+                for (String atlasTypeName : atlasTypeNames) {
+                    // Otherwise Atlas's "basic" search is likely to be significantly faster
+                    SearchParameters searchParameters = new SearchParameters();
+                    if (atlasTypeName != null) {
+                        searchParameters.setTypeName(atlasTypeName);
+                    }
+                    searchParameters.setIncludeClassificationAttributes(true);
+                    searchParameters.setIncludeSubClassifications(true);
+                    searchParameters.setIncludeSubTypes(true);
+                    // TODO: can we use fromEntityElement already here if there is a multi-type map?
+                    searchParameters.setOffset(fromEntityElement);
+                    searchParameters.setLimit(pageSize);
 
-                Map<String, String> omrsPropertyMap = typeDefStore.getPropertyMappingsForOMRSTypeDef(omrsTypeName, prefix);
-                Map<String, TypeDefAttribute> omrsAttrTypeDefs = typeDefStore.getAllTypeDefAttributesForName(omrsTypeName);
-                List<SearchParameters.FilterCriteria> criteria = new ArrayList<>();
+                    Map<String, String> omrsPropertyMap = typeDefStore.getPropertyMappingsForOMRSTypeDef(omrsTypeName, prefix);
+                    Map<String, TypeDefAttribute> omrsAttrTypeDefs = typeDefStore.getAllTypeDefAttributesForName(omrsTypeName);
+                    List<SearchParameters.FilterCriteria> criteria = new ArrayList<>();
 
-                boolean skipSearch = false;
-                if (matchProperties != null) {
-                    Map<String, InstancePropertyValue> properties = matchProperties.getInstanceProperties();
-                    // By default, include only Referenceable's properties (as these will be the only properties that exist
-                    // across ALL entity types)
-                    if (properties != null) {
-                        for (Map.Entry<String, InstancePropertyValue> property : properties.entrySet()) {
-                            String omrsPropertyName = property.getKey();
-                            InstancePropertyValue value = property.getValue();
-                            boolean added = addSearchConditionFromValue(
-                                    criteria,
-                                    omrsPropertyName,
-                                    value,
-                                    omrsPropertyMap,
-                                    omrsAttrTypeDefs,
-                                    (matchCriteria != null) && matchCriteria.equals(MatchCriteria.NONE),
-                                    false
-                            );
-                            if (!added) {
-                                if (matchCriteria == null || matchCriteria.equals(MatchCriteria.ALL)) {
-                                    // If we are asked to find everything, but one of the properties cannot be searched,
-                                    // then we should skip the search
-                                    skipSearch = true;
-                                    log.info("Skipping search ({}) -- ALL criteria should match, but this one is unmapped: {}", entityTypeGUID, omrsPropertyName);
+                    boolean skipSearch = false;
+                    if (matchProperties != null) {
+                        Map<String, InstancePropertyValue> properties = matchProperties.getInstanceProperties();
+                        // By default, include only Referenceable's properties (as these will be the only properties that exist
+                        // across ALL entity types)
+                        if (properties != null) {
+                            for (Map.Entry<String, InstancePropertyValue> property : properties.entrySet()) {
+                                String omrsPropertyName = property.getKey();
+                                InstancePropertyValue value = property.getValue();
+                                boolean added = addSearchConditionFromValue(
+                                        criteria,
+                                        omrsPropertyName,
+                                        value,
+                                        omrsPropertyMap,
+                                        omrsAttrTypeDefs,
+                                        (matchCriteria != null) && matchCriteria.equals(MatchCriteria.NONE),
+                                        false
+                                );
+                                if (!added) {
+                                    if (matchCriteria == null || matchCriteria.equals(MatchCriteria.ALL)) {
+                                        // If we are asked to find everything, but one of the properties cannot be searched,
+                                        // then we should skip the search
+                                        skipSearch = true;
+                                        log.info("Skipping search ({}) -- ALL criteria should match, but this one is unmapped: {}", entityTypeGUID, omrsPropertyName);
+                                    }
                                 }
                             }
                         }
-                    }
-                } else if (fullTextQuery != null) {
+                    } else if (fullTextQuery != null) {
 
-                    // Note that while it would be great to use the 'setQuery' of Atlas for this, it unfortunately does
-                    // not work for all kinds of cases where things like '.' or '/' are involved (which even appear in
-                    // Atlas's own sample metadata for properties like qualifiedName). Therefore we must do an OR-based
-                    // search explicitly across all string-based properties.
+                        // Note that while it would be great to use the 'setQuery' of Atlas for this, it unfortunately does
+                        // not work for all kinds of cases where things like '.' or '/' are involved (which even appear in
+                        // Atlas's own sample metadata for properties like qualifiedName). Therefore we must do an OR-based
+                        // search explicitly across all string-based properties.
 
-                    // Setup a new PrimitivePropertyValue for the full text itself, that we can use for all of the
-                    // various string attributes
-                    PrimitivePropertyValue primitivePropertyValue = new PrimitivePropertyValue();
-                    primitivePropertyValue.setPrimitiveDefCategory(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING);
-                    primitivePropertyValue.setPrimitiveValue(fullTextQuery);
-                    primitivePropertyValue.setTypeName(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING.getName());
-                    primitivePropertyValue.setTypeGUID(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING.getGUID());
+                        // Setup a new PrimitivePropertyValue for the full text itself, that we can use for all of the
+                        // various string attributes
+                        PrimitivePropertyValue primitivePropertyValue = new PrimitivePropertyValue();
+                        primitivePropertyValue.setPrimitiveDefCategory(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING);
+                        primitivePropertyValue.setPrimitiveValue(fullTextQuery);
+                        primitivePropertyValue.setTypeName(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING.getName());
+                        primitivePropertyValue.setTypeGUID(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING.getGUID());
 
-                    // Iterate through all of the string attributes, and for any that are actually mapped to OMRS
-                    // add a search condition for them
-                    for (Map.Entry<String, TypeDefAttribute> mapEntry : omrsAttrTypeDefs.entrySet()) {
-                        String omrsPropertyName = mapEntry.getKey();
-                        TypeDefAttribute typeDefAttribute = mapEntry.getValue();
-                        log.debug("Considering attribute: {}", omrsPropertyName);
-                        AttributeTypeDef attributeTypeDef = typeDefAttribute.getAttributeType();
-                        if (attributeTypeDef.getCategory().equals(AttributeTypeDefCategory.PRIMITIVE)) {
-                            PrimitiveDef primitiveDef = (PrimitiveDef) attributeTypeDef;
-                            if (primitiveDef.getPrimitiveDefCategory().equals(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING)) {
-                                log.debug(" ... attribute is a String, continuing ...");
-                                if (omrsPropertyMap.containsKey(omrsPropertyName)) {
-                                    String atlasPropertyName = omrsPropertyMap.get(omrsPropertyName);
-                                    log.debug(" ... attribute is mapped, to: {}", atlasPropertyName);
-                                    if (atlasPropertyName != null) {
-                                        log.debug(" ... adding criterion for value: {}", primitivePropertyValue);
-                                        boolean added = addSearchConditionFromValue(
-                                                criteria,
-                                                omrsPropertyName,
-                                                primitivePropertyValue,
-                                                omrsPropertyMap,
-                                                omrsAttrTypeDefs,
-                                                (matchCriteria != null) && matchCriteria.equals(MatchCriteria.NONE),
-                                                false
-                                        );
-                                        if (!added) {
-                                            if (matchCriteria == null || matchCriteria.equals(MatchCriteria.ALL)) {
-                                                // If we are asked to find everything, but one of the properties cannot be searched,
-                                                // then we should skip the search
-                                                skipSearch = true;
-                                                log.info("Skipping search ({}) -- ALL criteria should match, but this one is unmapped: {}", entityTypeGUID, omrsPropertyName);
+                        // Iterate through all of the string attributes, and for any that are actually mapped to OMRS
+                        // add a search condition for them
+                        for (Map.Entry<String, TypeDefAttribute> mapEntry : omrsAttrTypeDefs.entrySet()) {
+                            String omrsPropertyName = mapEntry.getKey();
+                            TypeDefAttribute typeDefAttribute = mapEntry.getValue();
+                            log.debug("Considering attribute: {}", omrsPropertyName);
+                            AttributeTypeDef attributeTypeDef = typeDefAttribute.getAttributeType();
+                            if (attributeTypeDef.getCategory().equals(AttributeTypeDefCategory.PRIMITIVE)) {
+                                PrimitiveDef primitiveDef = (PrimitiveDef) attributeTypeDef;
+                                if (primitiveDef.getPrimitiveDefCategory().equals(PrimitiveDefCategory.OM_PRIMITIVE_TYPE_STRING)) {
+                                    log.debug(" ... attribute is a String, continuing ...");
+                                    if (omrsPropertyMap.containsKey(omrsPropertyName)) {
+                                        String atlasPropertyName = omrsPropertyMap.get(omrsPropertyName);
+                                        log.debug(" ... attribute is mapped, to: {}", atlasPropertyName);
+                                        if (atlasPropertyName != null) {
+                                            log.debug(" ... adding criterion for value: {}", primitivePropertyValue);
+                                            boolean added = addSearchConditionFromValue(
+                                                    criteria,
+                                                    omrsPropertyName,
+                                                    primitivePropertyValue,
+                                                    omrsPropertyMap,
+                                                    omrsAttrTypeDefs,
+                                                    (matchCriteria != null) && matchCriteria.equals(MatchCriteria.NONE),
+                                                    false
+                                            );
+                                            if (!added) {
+                                                if (matchCriteria == null || matchCriteria.equals(MatchCriteria.ALL)) {
+                                                    // If we are asked to find everything, but one of the properties cannot be searched,
+                                                    // then we should skip the search
+                                                    skipSearch = true;
+                                                    log.info("Skipping search ({}) -- ALL criteria should match, but this one is unmapped: {}", entityTypeGUID, omrsPropertyName);
+                                                }
                                             }
                                         }
                                     }
@@ -2074,64 +2081,65 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
                             }
                         }
                     }
-                }
 
-                SearchParameters.FilterCriteria entityFilters = new SearchParameters.FilterCriteria();
-                if (criteria.size() > 1) {
-                    entityFilters.setCriterion(criteria);
-                    if (matchCriteria != null) {
-                        // If matchCriteria were provided, use them
-                        switch (matchCriteria) {
-                            case ALL:
-                            case NONE:
-                                entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.AND);
-                                break;
-                            case ANY:
-                                entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.OR);
-                                break;
+                    SearchParameters.FilterCriteria entityFilters = new SearchParameters.FilterCriteria();
+                    if (criteria.size() > 1) {
+                        entityFilters.setCriterion(criteria);
+                        if (matchCriteria != null) {
+                            // If matchCriteria were provided, use them
+                            switch (matchCriteria) {
+                                case ALL:
+                                case NONE:
+                                    entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.AND);
+                                    break;
+                                case ANY:
+                                    entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.OR);
+                                    break;
+                            }
+                        } else if (fullTextQuery != null) {
+                            // If none were provided, but a fullTextQuery was, we should use an OR-based semantic
+                            entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.OR);
+                        } else {
+                            // Otherwise we should default to an AND-based semantic
+                            entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.AND);
                         }
-                    } else if (fullTextQuery != null) {
-                        // If none were provided, but a fullTextQuery was, we should use an OR-based semantic
-                        entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.OR);
-                    } else {
-                        // Otherwise we should default to an AND-based semantic
-                        entityFilters.setCondition(SearchParameters.FilterCriteria.Condition.AND);
+                    } else if (criteria.size() == 1) {
+                        entityFilters = criteria.get(0);
                     }
-                } else if (criteria.size() == 1) {
-                    entityFilters = criteria.get(0);
-                }
-                searchParameters.setEntityFilters(entityFilters);
+                    searchParameters.setEntityFilters(entityFilters);
 
-                if (limitResultsByStatus != null) {
-                    Set<InstanceStatus> limitSet = new HashSet<>(limitResultsByStatus);
-                    if (limitSet.equals(availableStates) || (limitSet.size() == 1 && limitSet.contains(InstanceStatus.DELETED))) {
-                        // If we're to search for deleted, do not exclude deleted
-                        searchParameters.setExcludeDeletedEntities(false);
-                    } else if (limitSet.size() == 1 && limitSet.contains(InstanceStatus.ACTIVE)) {
-                        // Otherwise if we are only after active, do exclude deleted
-                        searchParameters.setExcludeDeletedEntities(true);
-                    } else if (!limitSet.isEmpty()) {
-                        // Otherwise we must be searching only for states that Atlas does not support, so we should ensure
-                        // that no results are returned (by skipping the search entirely).
-                        skipSearch = true;
-                        log.info("Skipping search ({}) -- searching for unsupported states: {}", entityTypeGUID, limitSet);
-                    }
-                }
-
-                if (!skipSearch) {
-
-                    if (limitResultsByClassification != null) {
-                        searchParameters.setClassification(limitResultsByClassification);
+                    if (limitResultsByStatus != null) {
+                        Set<InstanceStatus> limitSet = new HashSet<>(limitResultsByStatus);
+                        if (limitSet.equals(availableStates) || (limitSet.size() == 1 && limitSet.contains(InstanceStatus.DELETED))) {
+                            // If we're to search for deleted, do not exclude deleted
+                            searchParameters.setExcludeDeletedEntities(false);
+                        } else if (limitSet.size() == 1 && limitSet.contains(InstanceStatus.ACTIVE)) {
+                            // Otherwise if we are only after active, do exclude deleted
+                            searchParameters.setExcludeDeletedEntities(true);
+                        } else if (!limitSet.isEmpty()) {
+                            // Otherwise we must be searching only for states that Atlas does not support, so we should ensure
+                            // that no results are returned (by skipping the search entirely).
+                            skipSearch = true;
+                            log.info("Skipping search ({}) -- searching for unsupported states: {}", entityTypeGUID, limitSet);
+                        }
                     }
 
-                    AtlasSearchResult results = null;
-                    try {
-                        results = atlasRepositoryConnector.searchForEntities(searchParameters);
-                    } catch (AtlasServiceException e) {
-                        raiseRepositoryErrorException(ApacheAtlasOMRSErrorCode.INVALID_SEARCH, methodName, e, searchParameters.toString());
-                    }
-                    if (results != null) {
-                        totalResults.add(results);
+                    if (!skipSearch) {
+
+                        if (limitResultsByClassification != null) {
+                            searchParameters.setClassification(limitResultsByClassification);
+                        }
+
+                        AtlasSearchResult results = null;
+                        try {
+                            results = atlasRepositoryConnector.searchForEntities(searchParameters);
+                        } catch (AtlasServiceException e) {
+                            raiseRepositoryErrorException(ApacheAtlasOMRSErrorCode.INVALID_SEARCH, methodName, e, searchParameters.toString());
+                        }
+                        if (results != null) {
+                            totalResults.add(results);
+                        }
+
                     }
 
                 }
@@ -2240,28 +2248,40 @@ public class ApacheAtlasOMRSMetadataCollection extends OMRSMetadataCollectionBas
 
         List<EntityDetail> entityDetails = new ArrayList<>();
 
+        // If requested type is for a generated type, we need to retrieve it differently -- i.e. prefix the GUID
+        // ... so we should determine what prefixes to use based on the requested entity type GUID
+        Set<String> prefixes = new HashSet<>();
+        Map<String, Map<String, Set<String>>> mappings = getMappingsToSearch(entityTypeGUID, userId);
+        for (Map<String, Set<String>> atlasTypeNamesByPrefix : mappings.values()) {
+            prefixes.addAll(atlasTypeNamesByPrefix.keySet());
+        }
+
         if (atlasEntities != null) {
             for (AtlasEntityHeader atlasEntityHeader : atlasEntities) {
-                try {
-                    EntityDetail detail = getEntityDetail(userId, atlasEntityHeader.getGuid());
-                    // Depending on prefix, this could come back with results that should not be included
-                    // (ie. for generated types or non-generated types, depending on requested entityTypeGUID),
-                    // so only include those that were requested
-                    if (detail != null) {
-                        String typeName = detail.getType().getTypeDefName();
-                        try {
-                            TypeDef typeDef = repositoryHelper.getTypeDef(repositoryName, "entityTypeGUID", entityTypeGUID, "getEntityDetailsFromAtlasResults");
-                            if (repositoryHelper.isTypeOf(repositoryName, typeName, typeDef.getName())) {
-                                entityDetails.add(detail);
+                for (String prefix : prefixes) {
+                    try {
+                        AtlasGuid guid = new AtlasGuid(atlasEntityHeader.getGuid(), prefix);
+                        // ... and retrieve the entity itself only based on those types (prefixes) that have been requested
+                        EntityDetail detail = getEntityDetail(userId, guid.toString());
+                        // Depending on prefix, this could come back with results that should not be included
+                        // (ie. for generated types or non-generated types, depending on requested entityTypeGUID),
+                        // so only include those that were requested
+                        if (detail != null) {
+                            String typeName = detail.getType().getTypeDefName();
+                            try {
+                                TypeDef typeDef = repositoryHelper.getTypeDef(repositoryName, "entityTypeGUID", entityTypeGUID, "getEntityDetailsFromAtlasResults");
+                                if (repositoryHelper.isTypeOf(repositoryName, typeName, typeDef.getName())) {
+                                    entityDetails.add(detail);
+                                }
+                            } catch (TypeErrorException e) {
+                                log.error("Unable to find any TypeDef for entityTypeGUID: {}", entityTypeGUID);
                             }
-                        } catch (TypeErrorException e) {
-                            log.error("Unable to find any TypeDef for entityTypeGUID: {}", entityTypeGUID);
+                        } else {
+                            log.error("Entity with GUID {} not mapped -- excluding from results.", atlasEntityHeader.getGuid());
                         }
-                    } else {
-                        log.error("Entity with GUID {} not mapped -- excluding from results.", atlasEntityHeader.getGuid());
+                    } catch (EntityNotKnownException e) {
+                        log.error("Entity with GUID {} not known -- excluding from results.", atlasEntityHeader.getGuid());
                     }
-                } catch (EntityNotKnownException e) {
-                    log.error("Entity with GUID {} not known -- excluding from results.", atlasEntityHeader.getGuid());
                 }
             }
         }

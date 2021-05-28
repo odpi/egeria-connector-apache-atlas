@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Class that generically handles converting between Apache Atlas and OMRS Relationship TypeDefs.
@@ -196,8 +197,22 @@ public abstract class RelationshipDefMapping extends BaseTypeDefMapping {
 
         // TODO: at the moment this method is only used when adding new relationship types to Atlas,
         //  so this assumes that we will not use generated objects / prefixes for these net-new relationship types
-        String atlasTypeName1 = typeDefStore.getMappedAtlasTypeDefName(omrsTypeName1, null);
-        String atlasTypeName2 = typeDefStore.getMappedAtlasTypeDefName(omrsTypeName2, null);
+        Set<String> atlasTypeNames1 = typeDefStore.getMappedAtlasTypeDefNames(omrsTypeName1, null);
+        if (atlasTypeNames1.size() > 1) {
+            log.warn("Found multiple mapped types, when expected only one: {}", omrsTypeName1);
+        }
+        String atlasTypeName1 = null;
+        for (String candidate : atlasTypeNames1) {
+            atlasTypeName1 = candidate;
+        }
+        Set<String> atlasTypeNames2 = typeDefStore.getMappedAtlasTypeDefNames(omrsTypeName2, null);
+        if (atlasTypeNames2.size() > 1) {
+            log.warn("Found multiple mapped types, when expected only one: {}", omrsTypeName2);
+        }
+        String atlasTypeName2 = null;
+        for (String candidate : atlasTypeNames2) {
+            atlasTypeName2 = candidate;
+        }
 
         // These look inverted - see comment above for rationale
         String attrNameForAtlas1 = omrs2.getAttributeName();

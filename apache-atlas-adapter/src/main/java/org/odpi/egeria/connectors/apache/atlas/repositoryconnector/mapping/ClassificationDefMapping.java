@@ -128,9 +128,9 @@ public abstract class ClassificationDefMapping extends BaseTypeDefMapping {
         for (TypeDefLink typeDefLink : validEntities) {
             String omrsEntityName = typeDefLink.getName();
             // TODO: assumes all classifications remain one-to-one (never generated, so never a prefix)
-            String atlasEntityName = typeDefStore.getMappedAtlasTypeDefName(omrsEntityName, null);
+            Set<String> atlasEntityName = typeDefStore.getMappedAtlasTypeDefNames(omrsEntityName, null);
             if (atlasEntityName != null) {
-                entitiesForAtlas.add(atlasEntityName);
+                entitiesForAtlas.addAll(atlasEntityName);
             }
         }
         if (entitiesForAtlas.isEmpty()) {

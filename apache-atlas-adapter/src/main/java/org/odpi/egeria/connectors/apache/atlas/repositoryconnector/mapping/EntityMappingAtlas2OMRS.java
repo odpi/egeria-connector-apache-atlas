@@ -300,13 +300,13 @@ public class EntityMappingAtlas2OMRS {
             TypeDef typeDef = typeDefStore.getTypeDefByGUID(relationshipTypeGUID);
             if (typeDef != null) {
                 String omrsTypeDefName = typeDef.getName();
-                Map<String, String> atlasTypesByPrefix = typeDefStore.getAllMappedAtlasTypeDefNames(omrsTypeDefName);
-                for (Map.Entry<String, String> entry : atlasTypesByPrefix.entrySet()) {
+                Map<String, Set<String>> atlasTypesByPrefix = typeDefStore.getAllMappedAtlasTypeDefNames(omrsTypeDefName);
+                for (Map.Entry<String, Set<String>> entry : atlasTypesByPrefix.entrySet()) {
                     String prefixForType = entry.getKey();
-                    String atlasTypeName = entry.getValue();
+                    Set<String> atlasTypeNames = entry.getValue();
                     // TODO: Only generate the generated relationships (normally-mapped should be covered already above)
                     if (prefixForType != null) {
-                        log.info("Have not yet implemented this relationship: ({}) {}", prefixForType, atlasTypeName);
+                        log.info("Have not yet implemented this relationship: ({}) {}", prefixForType, atlasTypeNames);
                     }
                 }
             }
@@ -551,6 +551,13 @@ public class EntityMappingAtlas2OMRS {
         public String getAtlasTypeName() { return atlasTypeName; }
         public String getOmrsTypeName() { return omrsTypeName; }
 
+        @Override
+        public String toString() {
+            return "EntityMapping{" +
+                    "atlasTypeName='" + atlasTypeName + '\'' +
+                    ", omrsTypeName='" + omrsTypeName + '\'' +
+                    '}';
+        }
     }
 
     /**

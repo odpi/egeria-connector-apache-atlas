@@ -29,7 +29,7 @@ public class TypeDefStore {
 
     // Mapping details
     private Map<String, String> prefixToOmrsTypeName;
-    private Map<String, Map<String, String>> omrsNameToAtlasNamesByPrefix;
+    private Map<String, Map<String, Set<String>>> omrsNameToAtlasNamesByPrefix;
     private Map<String, Map<String, String>> atlasNameToOmrsNamesByPrefix;
     private Map<String, Map<String, Map<String, String>>> omrsNameToAttributeMapByPrefix;
     private Map<String, Map<String, Map<String, String>>> atlasNameToAttributeMapByPrefix;
@@ -92,7 +92,10 @@ public class TypeDefStore {
                     if (!omrsNameToAtlasNamesByPrefix.containsKey(omrsName)) {
                         omrsNameToAtlasNamesByPrefix.put(omrsName, new HashMap<>());
                     }
-                    omrsNameToAtlasNamesByPrefix.get(omrsName).put(prefix, atlasName);
+                    if (!omrsNameToAtlasNamesByPrefix.get(omrsName).containsKey(prefix)) {
+                        omrsNameToAtlasNamesByPrefix.get(omrsName).put(prefix, new HashSet<>());
+                    }
+                    omrsNameToAtlasNamesByPrefix.get(omrsName).get(prefix).add(atlasName);
                     if (!atlasNameToOmrsNamesByPrefix.containsKey(atlasName)) {
                         atlasNameToOmrsNamesByPrefix.put(atlasName, new HashMap<>());
                     }
@@ -279,14 +282,16 @@ public class TypeDefStore {
      * name for that prefix.
      *
      * @param omrsName the name of the OMRS TypeDef
-     * @return {@code Map<String, String>}
+     * @return {@code Map<String, Set<String>>}
      */
-    public Map<String, String> getAllMappedAtlasTypeDefNames(String omrsName) {
+    public Map<String, Set<String>> getAllMappedAtlasTypeDefNames(String omrsName) {
         if (isTypeDefMapped(omrsName)) {
             return omrsNameToAtlasNamesByPrefix.get(omrsName);
         } else if (omrsNameToGuid.containsKey(omrsName)) {
-            Map<String, String> map = new HashMap<>();
-            map.put(null, omrsName);
+            Map<String, Set<String>> map = new HashMap<>();
+            Set<String> set = new HashSet<>();
+            set.add(omrsName);
+            map.put(null, set);
             return map;
         } else {
             return Collections.emptyMap();
@@ -299,15 +304,17 @@ public class TypeDefStore {
      *
      * @param omrsName the name of the OMRS TypeDef
      * @param prefix the prefix (if any) when mappings to multiple types exist
-     * @return String
+     * @return {@code <Set>String}
      */
-    public String getMappedAtlasTypeDefName(String omrsName, String prefix) {
+    public Set<String> getMappedAtlasTypeDefNames(String omrsName, String prefix) {
         if (isTypeDefMapped(omrsName)) {
-            return omrsNameToAtlasNamesByPrefix.get(omrsName).getOrDefault(prefix, null);
+            return omrsNameToAtlasNamesByPrefix.get(omrsName).getOrDefault(prefix, Collections.emptySet());
         } else if (omrsNameToGuid.containsKey(omrsName)) {
-            return omrsName;
+            Set<String> set = new HashSet<>();
+            set.add(omrsName);
+            return set;
         } else {
-            return null;
+            return Collections.emptySet();
         }
     }
 
