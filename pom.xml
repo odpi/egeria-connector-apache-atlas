@@ -112,7 +112,7 @@
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <httpclient.version>4.5.13</httpclient.version>
         <kafka.version>2.4.1</kafka.version>
-        <zookeeper.version>3.5.6</zookeeper.version>
+        <zookeeper.version>3.7.0</zookeeper.version>
         <netty.version>4.1.65.Final</netty.version>
         <commons-codec.version>1.15</commons-codec.version>
         <maven-compiler.version>3.8.1</maven-compiler.version>
