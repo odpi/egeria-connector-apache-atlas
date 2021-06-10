@@ -330,33 +330,57 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
                 if (typeDef.getCategory() == TypeDefCategory.ENTITY_DEF) {
                     AtlasGuid entityGUID = new AtlasGuid(atlasEntityHeader.getGuid(), prefix);
                     try {
-                        EntityDetail entityDetail = repositoryHelper.getSkeletonEntity(
-                                sourceName,
-                                metadataCollectionId,
-                                InstanceProvenanceType.LOCAL_COHORT,
-                                null,
-                                typeDef.getName()
-                        );
-                        entityDetail.setGUID(entityGUID.toString());
-                        repositoryEventProcessor.processDeletedEntityEvent(
-                                sourceName,
-                                metadataCollectionId,
-                                originatorServerName,
-                                originatorServerType,
-                                localOrganizationName,
-                                entityDetail
-                        );
-                        // Also send events for any self-referencing (generated) relationships
-                        List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, prefix);
-                        for (Relationship generatedRelationship : generatedRelationships) {
-                            repositoryEventProcessor.processDeletedRelationshipEvent(
+                        if (atlasRepositoryConnector.sendPurgeForDelete()) {
+                            repositoryEventProcessor.processPurgedEntityEvent(
                                     sourceName,
                                     metadataCollectionId,
                                     originatorServerName,
                                     originatorServerType,
                                     localOrganizationName,
-                                    generatedRelationship
+                                    typeDef.getGUID(),
+                                    typeDef.getName(),
+                                    entityGUID.toString()
                             );
+                        } else {
+                            EntityDetail entityDetail = repositoryHelper.getSkeletonEntity(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    InstanceProvenanceType.LOCAL_COHORT,
+                                    null,
+                                    typeDef.getName()
+                            );
+                            entityDetail.setGUID(entityGUID.toString());
+                            repositoryEventProcessor.processDeletedEntityEvent(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    originatorServerName,
+                                    originatorServerType,
+                                    localOrganizationName,
+                                    entityDetail
+                            );
+                        }
+                        // Also send events for any self-referencing (generated) relationships
+                        List<Relationship> generatedRelationships = getGeneratedRelationshipsForEntity(atlasEntityHeader, prefix);
+                        for (Relationship generatedRelationship : generatedRelationships) {
+                            if (atlasRepositoryConnector.sendPurgeForDelete()) {
+                                repositoryEventProcessor.processPurgedRelationshipEvent(
+                                        sourceName,
+                                        metadataCollectionId,
+                                        originatorServerName,
+                                        originatorServerType,
+                                        localOrganizationName,
+                                        generatedRelationship
+                                );
+                            } else {
+                                repositoryEventProcessor.processDeletedRelationshipEvent(
+                                        sourceName,
+                                        metadataCollectionId,
+                                        originatorServerName,
+                                        originatorServerType,
+                                        localOrganizationName,
+                                        generatedRelationship
+                                );
+                            }
                         }
                     } catch (TypeErrorException e) {
                         log.error("Unable to process an entity delete for: {}", entityGUID, e);
@@ -384,22 +408,35 @@ public class ApacheAtlasOMRSRepositoryEventMapper extends OMRSRepositoryEventMap
                 if (typeDef.getCategory() == TypeDefCategory.RELATIONSHIP_DEF) {
                     AtlasGuid relationshipGUID = new AtlasGuid(atlasRelationshipHeader.getGuid(), prefix);
                     try {
-                        Relationship relationship = repositoryHelper.getSkeletonRelationship(
-                                sourceName,
-                                metadataCollectionId,
-                                InstanceProvenanceType.LOCAL_COHORT,
-                                null,
-                                typeDef.getName()
-                        );
-                        relationship.setGUID(relationshipGUID.toString());
-                        repositoryEventProcessor.processDeletedRelationshipEvent(
-                                sourceName,
-                                metadataCollectionId,
-                                originatorServerName,
-                                originatorServerType,
-                                localOrganizationName,
-                                relationship
-                        );
+                        if (atlasRepositoryConnector.sendPurgeForDelete()) {
+                            repositoryEventProcessor.processPurgedRelationshipEvent(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    originatorServerName,
+                                    originatorServerType,
+                                    localOrganizationName,
+                                    typeDef.getGUID(),
+                                    typeDef.getName(),
+                                    relationshipGUID.toString()
+                            );
+                        } else {
+                            Relationship relationship = repositoryHelper.getSkeletonRelationship(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    InstanceProvenanceType.LOCAL_COHORT,
+                                    null,
+                                    typeDef.getName()
+                            );
+                            relationship.setGUID(relationshipGUID.toString());
+                            repositoryEventProcessor.processDeletedRelationshipEvent(
+                                    sourceName,
+                                    metadataCollectionId,
+                                    originatorServerName,
+                                    originatorServerType,
+                                    localOrganizationName,
+                                    relationship
+                            );
+                        }
                     } catch (TypeErrorException e) {
                         log.error("Unable to process a relationship delete for: {}", relationshipGUID, e);
                     }
