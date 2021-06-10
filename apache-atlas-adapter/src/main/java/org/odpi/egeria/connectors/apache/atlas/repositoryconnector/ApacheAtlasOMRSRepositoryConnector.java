@@ -37,6 +37,7 @@ public class ApacheAtlasOMRSRepositoryConnector extends OMRSRepositoryConnector 
     private AtlasClientV2 atlasClient;
     private Map<String, AtlasEntityDef> atlasEntityTypesByName;
 
+    private boolean purgeForDelete = false;
     private boolean successfulInit = false;
 
     /**
@@ -99,6 +100,16 @@ public class ApacheAtlasOMRSRepositoryConnector extends OMRSRepositoryConnector 
      */
     public String getBaseURL() {
         return this.url;
+    }
+
+    /**
+     * Indicates whether a purge event should be sent in the case of a delete being received (true) or
+     * simply to propagate a delete (false). Default is to propagate delete as a delete.
+     *
+     * @return boolean
+     */
+    public boolean sendPurgeForDelete() {
+        return this.purgeForDelete;
     }
 
     /**
@@ -319,6 +330,14 @@ public class ApacheAtlasOMRSRepositoryConnector extends OMRSRepositoryConnector 
                 }
 
                 auditLog.logMessage(methodName, ApacheAtlasOMRSAuditCode.CONNECTED_TO_ATLAS.getMessageDefinition(getBaseURL()));
+
+                Map<String, Object> configProperties = connectionProperties.getConfigurationProperties();
+                if (configProperties != null) {
+                    Object candidate = configProperties.get(ApacheAtlasOMRSRepositoryConnectorProvider.PURGE_FOR_DELETE);
+                    if (candidate instanceof Boolean) {
+                        purgeForDelete = (Boolean) candidate;
+                    }
+                }
 
                 metadataCollection = new ApacheAtlasOMRSMetadataCollection(this,
                         serverName,
