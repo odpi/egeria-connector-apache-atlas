@@ -28,6 +28,12 @@ you will find the following details:
     - `cohort.coco.cts.local` - the local CTS Workbench cohort registration
     - `cohort.coco.cts.remote` - the cohort members considered remote from the CTS Workbench's perspective
 
+## Egeria 2.10
+
+| Apache Atlas version | Conformant profile(s) | Notes |
+| :--- | :--- | :--- |
+| [v2.0.0](results/2.10/2.0.0) | None | (see known issues and [known issue](https://github.com/odpi/egeria-connector-hadoop-ecosystem/issues/228)) |
+
 ## Egeria 2.5
 
 | Apache Atlas version | Conformant profile(s) | Notes |
