@@ -1,0 +1,441 @@
+Name:         atlas-cts-apache-atlas-5d869c4f7-npbd7
+Namespace:    default
+Priority:     0
+Node:         cgk8s-node-1.fyre.ibm.com/9.20.193.94
+Start Time:   Fri, 11 Jun 2021 16:01:40 +0100
+Labels:       app.kubernetes.io/component=apache-atlas-service
+              app.kubernetes.io/instance=atlas-cts
+              app.kubernetes.io/name=ec-cts-apacheatlas
+              pod-template-hash=5d869c4f7
+Annotations:  cni.projectcalico.org/podIP: 10.233.72.245/32
+              cni.projectcalico.org/podIPs: 10.233.72.245/32
+Status:       Running
+IP:           10.233.72.245
+IPs:
+  IP:           10.233.72.245
+Controlled By:  ReplicaSet/atlas-cts-apache-atlas-5d869c4f7
+Init Containers:
+  init-connector:
+    Container ID:  docker://17941e5ea077b6f01f5bdd61efbc9af5d3c00388a775421c4f7b54b4280cced0
+    Image:         docker.io/odpi/egeria-configure:2.10
+    Image ID:      docker-pullable://odpi/egeria-configure@sha256:19168e2fe566b3908b7a7fe1a49288b598b1b4046793129c4a00b2cf4403c7f0
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /bin/bash
+      -c
+      cd /opt/egeria/connectors && wget ${CONNECTOR_URL}
+      
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 11 Jun 2021 16:01:42 +0100
+      Finished:     Fri, 11 Jun 2021 16:01:43 +0100
+    Ready:          True
+    Restart Count:  0
+    Environment Variables from:
+      atlas-cts-configmap  ConfigMap  Optional: false
+    Environment:           <none>
+    Mounts:
+      /opt/egeria/connectors from egeria-atlas-connector-volume (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-m8p54 (ro)
+Containers:
+  proxy:
+    Container ID:   docker://355cc09ae53a4997a38d96d370cce2f5474b151478afd03f026d89e5012d0943
+    Image:          docker.io/odpi/egeria:2.10
+    Image ID:       docker-pullable://odpi/egeria@sha256:4aa45a6b9b48c9cbab0eda265b9305013e092efd1f8f8700ef19258432413176
+    Port:           9443/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 11 Jun 2021 16:01:45 +0100
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     1
+      memory:  2Gi
+    Requests:
+      cpu:      250m
+      memory:   1Gi
+    Readiness:  tcp-socket :9443 delay=10s timeout=1s period=10s #success=1 #failure=6
+    Environment Variables from:
+      atlas-cts-configmap  ConfigMap  Optional: false
+    Environment:
+      LOADER_PATH:                                            /opt/egeria/connectors
+      LOGGING_LEVEL_ORG_ODPI_EGERIA_CONNECTORS_APACHE_ATLAS:  DEBUG
+    Mounts:
+      /opt/egeria/connectors from egeria-atlas-connector-volume (ro)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-m8p54 (ro)
+  apache-atlas:
+    Container ID:   docker://dddc8528627cbc7092702e02f91a52c71547ab8a717a0e1f4eae14eef46f3307
+    Image:          hyc-daell-infosvr-docker-local.artifactory.swg-devops.com/apache/atlas:v200-samples
+    Image ID:       docker-pullable://hyc-daell-infosvr-docker-local.artifactory.swg-devops.com/apache/atlas@sha256:040a6af5781eee30189363591993a99ff1ff31758efa9656f303286883878415
+    Ports:          21000/TCP, 9026/TCP, 9027/TCP
+    Host Ports:     0/TCP, 0/TCP, 0/TCP
+    State:          Running
+      Started:      Fri, 11 Jun 2021 16:01:45 +0100
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     4
+      memory:  4Gi
+    Requests:
+      cpu:        2
+      memory:     2Gi
+    Liveness:     http-get http://:21000/login.jsp delay=180s timeout=1s period=20s #success=1 #failure=3
+    Readiness:    http-get http://:21000/login.jsp delay=180s timeout=1s period=20s #success=1 #failure=12
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-m8p54 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  egeria-atlas-connector-volume:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  default-token-m8p54:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-m8p54
+    Optional:    false
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                From               Message
+  ----     ------     ----               ----               -------
+  Normal   Scheduled  31m                default-scheduler  Successfully assigned default/atlas-cts-apache-atlas-5d869c4f7-npbd7 to cgk8s-node-1.fyre.ibm.com
+  Normal   Pulled     31m                kubelet            Container image "docker.io/odpi/egeria-configure:2.10" already present on machine
+  Normal   Created    31m                kubelet            Created container init-connector
+  Normal   Started    31m                kubelet            Started container init-connector
+  Normal   Pulled     31m                kubelet            Container image "docker.io/odpi/egeria:2.10" already present on machine
+  Normal   Created    31m                kubelet            Created container proxy
+  Normal   Started    31m                kubelet            Started container proxy
+  Normal   Pulled     31m                kubelet            Container image "hyc-daell-infosvr-docker-local.artifactory.swg-devops.com/apache/atlas:v200-samples" already present on machine
+  Normal   Created    31m                kubelet            Created container apache-atlas
+  Normal   Started    31m                kubelet            Started container apache-atlas
+  Warning  Unhealthy  30m (x4 over 31m)  kubelet            Readiness probe failed: dial tcp 10.233.72.245:9443: connect: connection refused
+  Warning  Unhealthy  28m                kubelet            Readiness probe failed: Get "http://10.233.72.245:21000/login.jsp": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+
+Name:         atlas-cts-init-and-report-5fdc568884-gjzpp
+Namespace:    default
+Priority:     0
+Node:         cgk8s-node-3.fyre.ibm.com/9.20.194.199
+Start Time:   Fri, 11 Jun 2021 16:01:40 +0100
+Labels:       app.kubernetes.io/component=init-and-report
+              app.kubernetes.io/instance=atlas-cts
+              app.kubernetes.io/name=ec-cts-apacheatlas
+              pod-template-hash=5fdc568884
+Annotations:  cni.projectcalico.org/podIP: 10.233.64.206/32
+              cni.projectcalico.org/podIPs: 10.233.64.206/32
+Status:       Running
+IP:           10.233.64.206
+IPs:
+  IP:           10.233.64.206
+Controlled By:  ReplicaSet/atlas-cts-init-and-report-5fdc568884
+Init Containers:
+  wait-for-atlasproxy:
+    Container ID:   docker://05c6160041ed486ce5bb6f393b85960d58e7122e30154cd15bbcdc34252b347e
+    Image:          docker.io/odpi/egeria-configure:2.10
+    Image ID:       docker-pullable://odpi/egeria-configure@sha256:19168e2fe566b3908b7a7fe1a49288b598b1b4046793129c4a00b2cf4403c7f0
+    Port:           <none>
+    Host Port:      <none>
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 11 Jun 2021 16:01:42 +0100
+      Finished:     Fri, 11 Jun 2021 16:05:20 +0100
+    Ready:          True
+    Restart Count:  0
+    Environment:
+      SERVICE:  atlas-cts-apache-atlas-service
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from atlas-cts-cts-token-qtx4g (ro)
+  wait-for-kafka:
+    Container ID:   docker://cc7a4b15774a1932d6a076795348e62cf0e0e77aab24493b3a84eb4203782460
+    Image:          docker.io/odpi/egeria-configure:2.10
+    Image ID:       docker-pullable://odpi/egeria-configure@sha256:19168e2fe566b3908b7a7fe1a49288b598b1b4046793129c4a00b2cf4403c7f0
+    Port:           <none>
+    Host Port:      <none>
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 11 Jun 2021 16:05:21 +0100
+      Finished:     Fri, 11 Jun 2021 16:05:21 +0100
+    Ready:          True
+    Restart Count:  0
+    Environment:
+      SERVICE:  atlas-cts-kafka
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from atlas-cts-cts-token-qtx4g (ro)
+  wait-for-apache-atlas:
+    Container ID:  docker://6f415519e0991ceb12cd162afc60f2b3da05a84a57eae76a308dc3d2bb2bf3f4
+    Image:         docker.io/odpi/egeria-configure:2.10
+    Image ID:      docker-pullable://odpi/egeria-configure@sha256:19168e2fe566b3908b7a7fe1a49288b598b1b4046793129c4a00b2cf4403c7f0
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /bin/bash
+      -c
+      until $(curl -s -f --connect-timeout 5 --url http://atlas-cts-apache-atlas-service:${ATLAS_PORT}/login.jsp &>/dev/null); do echo waiting for http://atlas-cts-apache-atlas-service:${ATLAS_PORT}/login.jsp to be accessible; sleep 2; done;
+      
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 11 Jun 2021 16:05:22 +0100
+      Finished:     Fri, 11 Jun 2021 16:05:22 +0100
+    Ready:          True
+    Restart Count:  0
+    Environment Variables from:
+      atlas-cts-configmap  ConfigMap  Optional: false
+    Environment:           <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from atlas-cts-cts-token-qtx4g (ro)
+Containers:
+  init-and-report:
+    Container ID:  docker://397038fe1691d6c0ea0f832f6ab4eee649cb8da892e174e245cab36c069b493c
+    Image:         docker.io/odpi/egeria-configure:2.10
+    Image ID:      docker-pullable://odpi/egeria-configure@sha256:19168e2fe566b3908b7a7fe1a49288b598b1b4046793129c4a00b2cf4403c7f0
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /bin/bash
+      -c
+      curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/server-url-root?url=${ATLAS_ENDPOINT} && curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/cts/server-type?typeName=Conformance && curl -k -f --verbose --basic admin:admin -X POST --header "Content-Type: application/json" ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/cts/event-bus?topicURLRoot=egeria --data '{"producer": {"bootstrap.servers": "'"${KAFKA_ENDPOINT}"'"}, "consumer": {"bootstrap.servers": "'"${KAFKA_ENDPOINT}"'"} }' && curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/cts/cohorts/${EGERIA_COHORT} && curl -k -f --verbose --basic admin:admin -X POST --header "Content-Type: application/json" ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/cts/conformance-suite-workbenches/repository-workbench/repositories --data '{"class":"RepositoryConformanceWorkbenchConfig","tutRepositoryServerName":"'"${ATLAS_SERVER}"'","maxSearchResults":5}' && curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/cts/instance && curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/server-type?typeName=Apache%20Atlas && curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/organization-name?name=ODPi && curl -k -f --verbose --basic admin:admin -X POST --header "Content-Type: application/json" ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/event-bus?topicURLRoot=egeria --data '{"producer": {"bootstrap.servers": "'"${KAFKA_ENDPOINT}"'"}, "consumer": {"bootstrap.servers": "'"${KAFKA_ENDPOINT}"'"} }' && curl -k -f --verbose --basic admin:admin -X POST --header "Content-Type: application/json" ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/local-repository/mode/repository-proxy/connection --data '{"class":"Connection","connectorType":{"class":"ConnectorType","connectorProviderClassName":"org.odpi.egeria.connectors.apache.atlas.repositoryconnector.ApacheAtlasOMRSRepositoryConnectorProvider"},"endpoint":{"class":"Endpoint","address":"'"${ATLAS_HOST}:${ATLAS_PORT}"'","protocol":"http"},"userId":"'"${ATLAS_USER}"'","clearPassword":"'"${ATLAS_PASS}"'","configurationProperties":{"defaultZones":["default"]}}' && curl -k -f --verbose --basic admin:admin -X POST ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/cohorts/${EGERIA_COHORT} && curl -k -f --verbose --basic admin:admin -X POST "${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/local-repository/event-mapper-details?connectorProvider=org.odpi.egeria.connectors.apache.atlas.eventmapper.ApacheAtlasOMRSRepositoryEventMapperProvider&eventSource=${ATLAS_KAFKA_ENDPOINT}" && curl -k -f --verbose --basic admin:admin -X POST --max-time 900 ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/instance && curl -k -f --verbose --basic admin:admin -X GET ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/cts/configuration > /tmp/omag.server.cts.config && curl -k -f --verbose --basic admin:admin -X GET ${ATLAS_ENDPOINT}/open-metadata/admin-services/users/${EGERIA_USER}/servers/${ATLAS_SERVER}/configuration > /tmp/omag.server.${ATLAS_SERVER}.config && curl -k -f --verbose --basic admin:admin -X GET ${ATLAS_ENDPOINT}/servers/cts/open-metadata/repository-services/users/${EGERIA_USER}/metadata-highway/local-registration > /tmp/cohort.${EGERIA_COHORT}.cts.local && curl -k -f --verbose --basic admin:admin -X GET ${ATLAS_ENDPOINT}/servers/cts/open-metadata/repository-services/users/${EGERIA_USER}/metadata-highway/cohorts/${EGERIA_COHORT}/remote-members > /tmp/cohort.${EGERIA_COHORT}.cts.remote && curl -k -f --verbose --basic admin:admin -X GET ${ATLAS_ENDPOINT}/servers/${ATLAS_SERVER}/open-metadata/repository-services/users/${EGERIA_USER}/metadata-highway/local-registration > /tmp/cohort.${EGERIA_COHORT}.${ATLAS_SERVER}.local && curl -k -f --verbose --basic admin:admin -X GET ${ATLAS_ENDPOINT}/servers/${ATLAS_SERVER}/open-metadata/repository-services/users/${EGERIA_USER}/metadata-highway/cohorts/${EGERIA_COHORT}/remote-members > /tmp/cohort.${EGERIA_COHORT}.${ATLAS_SERVER}.remote && echo ""; echo "Waiting 2 minutes for CTS to start..."; sleep 120 && until [ $(curl -k -f --silent --basic admin:admin -X GET ${ATLAS_ENDPOINT}/servers/cts/open-metadata/conformance-suite/users/${EGERIA_USER}/status/workbenches/repository-workbench | jq '.workbenchStatus.workbenchComplete') == "true" ]; do echo "... waiting for CTS to complete"; sleep 20; done && curl -k -f --silent --basic admin:admin -X GET --max-time 900 ${ATLAS_ENDPOINT}/servers/cts/open-metadata/conformance-suite/users/${EGERIA_USER}/report > /tmp/openmetadata.conformance.testlab.results && cd /tmp; tar cvf ${CTS_REPORT_NAME}.tar *.config cohort.* openmetadata.conformance.testlab.results; gzip ${CTS_REPORT_NAME}.tar && echo "Complete -- CTS results available to download from /tmp/${CTS_REPORT_NAME}.tar.gz" && tail -f /dev/null
+      
+    State:          Running
+      Started:      Fri, 11 Jun 2021 16:05:23 +0100
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  64Mi
+    Requests:
+      cpu:     100m
+      memory:  16Mi
+    Environment Variables from:
+      atlas-cts-configmap  ConfigMap  Optional: false
+    Environment:           <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from atlas-cts-cts-token-qtx4g (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  atlas-cts-cts-token-qtx4g:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  atlas-cts-cts-token-qtx4g
+    Optional:    false
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  31m   default-scheduler  Successfully assigned default/atlas-cts-init-and-report-5fdc568884-gjzpp to cgk8s-node-3.fyre.ibm.com
+  Normal  Pulled     31m   kubelet            Container image "docker.io/odpi/egeria-configure:2.10" already present on machine
+  Normal  Created    31m   kubelet            Created container wait-for-atlasproxy
+  Normal  Started    31m   kubelet            Started container wait-for-atlasproxy
+  Normal  Pulled     27m   kubelet            Container image "docker.io/odpi/egeria-configure:2.10" already present on machine
+  Normal  Created    27m   kubelet            Created container wait-for-kafka
+  Normal  Started    27m   kubelet            Started container wait-for-kafka
+  Normal  Pulled     27m   kubelet            Container image "docker.io/odpi/egeria-configure:2.10" already present on machine
+  Normal  Created    27m   kubelet            Created container wait-for-apache-atlas
+  Normal  Started    27m   kubelet            Started container wait-for-apache-atlas
+  Normal  Pulled     27m   kubelet            Container image "docker.io/odpi/egeria-configure:2.10" already present on machine
+  Normal  Created    27m   kubelet            Created container init-and-report
+  Normal  Started    27m   kubelet            Started container init-and-report
+
+Name:         atlas-cts-kafka-0
+Namespace:    default
+Priority:     0
+Node:         cgk8s-node-3.fyre.ibm.com/9.20.194.199
+Start Time:   Fri, 11 Jun 2021 16:01:40 +0100
+Labels:       app.kubernetes.io/component=kafka
+              app.kubernetes.io/instance=atlas-cts
+              app.kubernetes.io/managed-by=Helm
+              app.kubernetes.io/name=kafka
+              controller-revision-hash=atlas-cts-kafka-5bc48cf7bd
+              helm.sh/chart=kafka-7.0.4
+              statefulset.kubernetes.io/pod-name=atlas-cts-kafka-0
+Annotations:  cni.projectcalico.org/podIP: 10.233.64.208/32
+              cni.projectcalico.org/podIPs: 10.233.64.208/32
+Status:       Running
+IP:           10.233.64.208
+IPs:
+  IP:           10.233.64.208
+Controlled By:  StatefulSet/atlas-cts-kafka
+Containers:
+  kafka:
+    Container ID:   docker://2837451de63f0f55f4d2df281f3312c1fd7fc8c66bbeeef70a594b2a85d29480
+    Image:          docker.io/bitnami/kafka:2.3.1-debian-9-r21
+    Image ID:       docker-pullable://bitnami/kafka@sha256:c8f86b2bba447bec12dbda8c6ec48bada65f59ca67cd5dba04e41cf5373f2162
+    Port:           9092/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Fri, 11 Jun 2021 16:01:42 +0100
+    Ready:          True
+    Restart Count:  0
+    Liveness:       tcp-socket :kafka delay=10s timeout=5s period=10s #success=1 #failure=2
+    Readiness:      tcp-socket :kafka delay=5s timeout=5s period=10s #success=1 #failure=6
+    Environment:
+      BITNAMI_DEBUG:                                       false
+      MY_POD_IP:                                            (v1:status.podIP)
+      MY_POD_NAME:                                         atlas-cts-kafka-0 (v1:metadata.name)
+      KAFKA_CFG_ZOOKEEPER_CONNECT:                         atlas-cts-zookeeper
+      KAFKA_PORT_NUMBER:                                   9092
+      KAFKA_CFG_LISTENERS:                                 PLAINTEXT://:$(KAFKA_PORT_NUMBER)
+      KAFKA_CFG_ADVERTISED_LISTENERS:                      PLAINTEXT://$(MY_POD_NAME).atlas-cts-kafka-headless.default.svc.cluster.local:$(KAFKA_PORT_NUMBER)
+      ALLOW_PLAINTEXT_LISTENER:                            yes
+      KAFKA_CFG_BROKER_ID:                                 -1
+      KAFKA_CFG_DELETE_TOPIC_ENABLE:                       false
+      KAFKA_HEAP_OPTS:                                     -Xmx1024m -Xms1024m
+      KAFKA_CFG_LOG_FLUSH_INTERVAL_MESSAGES:               10000
+      KAFKA_CFG_LOG_FLUSH_INTERVAL_MS:                     1000
+      KAFKA_CFG_LOG_RETENTION_BYTES:                       1073741824
+      KAFKA_CFG_LOG_RETENTION_CHECK_INTERVALS_MS:          300000
+      KAFKA_CFG_LOG_RETENTION_HOURS:                       168
+      KAFKA_CFG_MESSAGE_MAX_BYTES:                         1000012
+      KAFKA_CFG_LOG_SEGMENT_BYTES:                         1073741824
+      KAFKA_CFG_LOG_DIRS:                                  /bitnami/kafka/data
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR:                1
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR:          1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR:  1
+      KAFKA_CFG_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM:     https
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR:             1
+      KAFKA_CFG_NUM_IO_THREADS:                            8
+      KAFKA_CFG_NUM_NETWORK_THREADS:                       3
+      KAFKA_CFG_NUM_PARTITIONS:                            1
+      KAFKA_CFG_NUM_RECOVERY_THREADS_PER_DATA_DIR:         1
+      KAFKA_CFG_SOCKET_RECEIVE_BUFFER_BYTES:               102400
+      KAFKA_CFG_SOCKET_REQUEST_MAX_BYTES:                  104857600
+      KAFKA_CFG_SOCKET_SEND_BUFFER_BYTES:                  102400
+      KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS:           6000
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-m8p54 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  data:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  default-token-m8p54:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-m8p54
+    Optional:    false
+QoS Class:       BestEffort
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age   From               Message
+  ----     ------     ----  ----               -------
+  Normal   Scheduled  31m   default-scheduler  Successfully assigned default/atlas-cts-kafka-0 to cgk8s-node-3.fyre.ibm.com
+  Normal   Pulled     31m   kubelet            Container image "docker.io/bitnami/kafka:2.3.1-debian-9-r21" already present on machine
+  Normal   Created    31m   kubelet            Created container kafka
+  Normal   Started    31m   kubelet            Started container kafka
+  Warning  Unhealthy  31m   kubelet            Readiness probe failed: dial tcp 10.233.64.208:9092: connect: connection refused
+
+Name:         atlas-cts-zookeeper-0
+Namespace:    default
+Priority:     0
+Node:         cgk8s-node-3.fyre.ibm.com/9.20.194.199
+Start Time:   Fri, 11 Jun 2021 16:01:40 +0100
+Labels:       app.kubernetes.io/component=zookeeper
+              app.kubernetes.io/instance=atlas-cts
+              app.kubernetes.io/name=zookeeper
+              controller-revision-hash=atlas-cts-zookeeper-6bddd4b999
+              helm.sh/chart=zookeeper-5.1.1
+              statefulset.kubernetes.io/pod-name=atlas-cts-zookeeper-0
+Annotations:  cni.projectcalico.org/podIP: 10.233.64.202/32
+              cni.projectcalico.org/podIPs: 10.233.64.202/32
+Status:       Running
+IP:           10.233.64.202
+IPs:
+  IP:           10.233.64.202
+Controlled By:  StatefulSet/atlas-cts-zookeeper
+Containers:
+  zookeeper:
+    Container ID:  docker://69d714e5ca509a546658cd58186c9cf65ef47c50c194d1bbafe5a736713b8fc0
+    Image:         docker.io/bitnami/zookeeper:3.5.6-debian-9-r20
+    Image ID:      docker-pullable://bitnami/zookeeper@sha256:0c546cc26e4d3a53a8f4f58e0517e1903c862a60ff03d9b5e9f5beb6acca8683
+    Ports:         2181/TCP, 2888/TCP, 3888/TCP
+    Host Ports:    0/TCP, 0/TCP, 0/TCP
+    Command:
+      bash
+      -ec
+      # Execute entrypoint as usual after obtaining ZOO_SERVER_ID based on POD hostname
+      HOSTNAME=`hostname -s`
+      if [[ $HOSTNAME =~ (.*)-([0-9]+)$ ]]; then
+        ORD=${BASH_REMATCH[2]}
+        export ZOO_SERVER_ID=$((ORD+1))
+      else
+        echo "Failed to get index from hostname $HOST"
+        exit 1
+      fi
+      exec /entrypoint.sh /run.sh
+      
+    State:          Running
+      Started:      Fri, 11 Jun 2021 16:01:42 +0100
+    Ready:          True
+    Restart Count:  0
+    Requests:
+      cpu:      250m
+      memory:   256Mi
+    Liveness:   tcp-socket :client delay=30s timeout=5s period=10s #success=1 #failure=6
+    Readiness:  tcp-socket :client delay=5s timeout=5s period=10s #success=1 #failure=6
+    Environment:
+      ZOO_PORT_NUMBER:             2181
+      ZOO_TICK_TIME:               2000
+      ZOO_INIT_LIMIT:              10
+      ZOO_SYNC_LIMIT:              5
+      ZOO_MAX_CLIENT_CNXNS:        60
+      ZOO_4LW_COMMANDS_WHITELIST:  srvr, mntr
+      ZOO_SERVERS:                 atlas-cts-zookeeper-0.atlas-cts-zookeeper-headless.default.svc.cluster.local:2888:3888
+      ZOO_ENABLE_AUTH:             no
+      ZOO_HEAP_SIZE:               1024
+      ZOO_LOG_LEVEL:               ERROR
+      ALLOW_ANONYMOUS_LOGIN:       yes
+    Mounts:
+      /bitnami/zookeeper from data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-m8p54 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  data:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  default-token-m8p54:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-m8p54
+    Optional:    false
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  31m   default-scheduler  Successfully assigned default/atlas-cts-zookeeper-0 to cgk8s-node-3.fyre.ibm.com
+  Normal  Pulled     31m   kubelet            Container image "docker.io/bitnami/zookeeper:3.5.6-debian-9-r20" already present on machine
+  Normal  Created    31m   kubelet            Created container zookeeper
+  Normal  Started    31m   kubelet            Started container zookeeper
+
