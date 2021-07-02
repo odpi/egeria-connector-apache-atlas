@@ -116,7 +116,7 @@
         <netty.version>4.1.65.Final</netty.version>
         <commons-codec.version>1.15</commons-codec.version>
         <maven-compiler.version>3.8.1</maven-compiler.version>
-        <spotbugs.version>4.2.3</spotbugs.version>
+        <spotbugs.version>4.3.0</spotbugs.version>
         <jacoco-plugin.version>0.8.5</jacoco-plugin.version>
         <!-- Configuration of sonar code scanning-->
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
