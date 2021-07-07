@@ -90,7 +90,7 @@
         <!-- Versions of dependent libraries -->
         <apacheatlas.version>2.1.0</apacheatlas.version>
         <slf4j.version>1.7.30</slf4j.version>
-        <jackson.version>2.12.3</jackson.version>
+        <jackson.version>2.12.4</jackson.version>
         <spring.version>5.3.8</spring.version>
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
